@@ -117,7 +117,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             # Create and navigate to project directory
             mkdir -p ~/sprout-digital-assessment
@@ -247,7 +246,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd ~/sprout-digital-assessment
 
