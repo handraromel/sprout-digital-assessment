@@ -124,7 +124,7 @@ jobs:
             cd ~/sprout-digital-assessment
 
             # Create production environment file
-            cat << 'EOF' > .env.prod
+            cat << EOF > .env.prod
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
