@@ -1,0 +1,268 @@
+name: Sprout Digital Assessment CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  DOCKER_API_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-api
+  DOCKER_UI_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-ui
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: |
+            api/package-lock.json
+            ui/package-lock.json
+
+      - name: Install UI dependencies
+        run: |
+          cd ui
+          npm ci
+
+      - name: Run UI lint
+        run: |
+          cd ui
+          npm run lint
+        continue-on-error: true
+
+      - name: Install API dependencies
+        run: |
+          cd api
+          npm ci
+
+      - name: Build API (TypeScript check)
+        run: |
+          cd api
+          npm run build
+        continue-on-error: true
+
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_API_IMAGE }}:latest
+            ${{ env.DOCKER_API_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.DOCKER_API_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_API_IMAGE }}:buildcache,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push UI image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./ui
+          file: ./ui/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          tags: |
+            ${{ env.DOCKER_UI_IMAGE }}:latest
+            ${{ env.DOCKER_UI_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            # Create and navigate to project directory
+            mkdir -p ~/sprout-digital-assessment
+            cd ~/sprout-digital-assessment
+
+            # Create production environment file
+            cat << 'EOF' > .env.prod
+            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            API_PORT=${{ secrets.API_PORT }}
+            UI_PORT=${{ secrets.UI_PORT }}
+            NODE_ENV=${{ secrets.NODE_ENV }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            JWT_ACCESS_EXPIRY=${{ secrets.JWT_ACCESS_EXPIRY }}
+            JWT_REFRESH_EXPIRY=${{ secrets.JWT_REFRESH_EXPIRY }}
+            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+            API_PREFIX=${{ secrets.API_PREFIX }}
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            EOF
+
+            # Create docker-compose.yml directly on server
+            cat << 'EOF' > docker-compose.yml
+            services:
+              db:
+                image: postgres:17-alpine
+                container_name: sprout-db
+                restart: unless-stopped
+                environment:
+                  POSTGRES_USER: ${POSTGRES_USER}
+                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                  POSTGRES_DB: ${POSTGRES_DB}
+                  PGDATA: /var/lib/postgresql/data/pgdata
+                volumes:
+                  - postgres_data:/var/lib/postgresql/data
+                networks:
+                  - sprout-network
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
+                  start_period: 10s
+
+              api:
+                image: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-api:latest
+                container_name: sprout-api
+                restart: unless-stopped
+                ports:
+                  - "${API_PORT}:3000"
+                environment:
+                  NODE_ENV: ${NODE_ENV}
+                  PORT: 3000
+                  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+                  JWT_SECRET: ${JWT_SECRET}
+                  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+                  JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY}
+                  JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY}
+                  CORS_ORIGIN: ${CORS_ORIGIN}
+                  API_PREFIX: ${API_PREFIX}
+                depends_on:
+                  db:
+                    condition: service_healthy
+                networks:
+                  - sprout-network
+                healthcheck:
+                  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 40s
+                command: sh -c "npx prisma migrate deploy && node dist/index.js"
+
+              ui:
+                image: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-ui:latest
+                container_name: sprout-ui
+                restart: unless-stopped
+                ports:
+                  - "${UI_PORT}:3000"
+                environment:
+                  NODE_ENV: production
+                depends_on:
+                  api:
+                    condition: service_healthy
+                networks:
+                  - sprout-network
+                healthcheck:
+                  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 5s
+
+            networks:
+              sprout-network:
+                driver: bridge
+
+            volumes:
+              postgres_data:
+                driver: local
+            EOF
+
+            # Login to Docker Hub
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+            # Pull latest images
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-api:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-ui:latest
+
+            # Stop and remove old containers
+            docker compose --env-file .env.prod down || true
+
+            # Start new containers
+            docker compose --env-file .env.prod up -d
+
+            # Clean up unused images
+            docker image prune -af
+
+            # Show running containers
+            docker compose ps
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            cd ~/sprout-digital-assessment
+
+            # Wait for services to be healthy
+            echo "Waiting for services to be healthy..."
+            sleep 30
+
+            # Check service health
+            docker compose ps
+            docker compose logs --tail=50
+
+            # Test API endpoint
+            echo "Testing API endpoint..."
+            curl -sf http://localhost:${{ secrets.API_PORT }}/health && echo "API OK" || echo "API health check failed"
+
+            # Test UI endpoint
+            echo "Testing UI endpoint..."
+            curl -sf http://localhost:${{ secrets.UI_PORT }} > /dev/null && echo "UI OK" || echo "UI health check failed"

@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+:root {
+  /* Global Theme Colors */
+  --sprd-background: #282a36;
+  --sprd-current-line: #44475a;
+  --sprd-foreground: #f8f8f2;
+  --sprd-comment: #96abeb;
+  --sprd-cyan: #8be9fd;
+  --sprd-green: #50fa7b;
+  --sprd-orange: #ffb86c;
+  --sprd-pink: #ff79c6;
+  --sprd-purple: #bd93f9;
+  --sprd-red: #ff5555;
+  --sprd-yellow: #f1fa8c;
+  --sprd-primary: #6272a4;
+  --sprd-secondary: #44475a;
+  --sprd-blue: #61dafb;
+
+  /* Semantic Color Variables */
+  --background: #f5f5f5;
+  --background-elevated: #ffffff;
+  --background-surface: #f3f0f0;
+  --foreground: #1a1a1a;
+  --foreground-muted: #6b7280;
+  --border: #e5e7eb;
+  --border-hover: #9ca3af;
+
+  /* Component Colors */
+  --input-background: #ffffff;
+  --input-border: #d1d5db;
+  --input-border-focus: #bd93f9;
+  --input-text: #1a1a1a;
+  --input-placeholder: #9ca3af;
+
+  /* Button Colors */
+  --button-primary-bg: #bd93f9;
+  --button-primary-hover: #9d73d9;
+  --button-primary-text: #ffffff;
+  --button-secondary-bg: #f5f5f5;
+  --button-secondary-hover: #f1eef5;
+  --button-secondary-text: #1a1a1a;
+  --button-info-hover: #6bc9e3;
+  --button-success-hover: #40da6b;
+  --button-error-hover: #e53535;
+  --button-warning-hover: #efa85c;
+
+  /* Status Colors */
+  --success: #50fa7b;
+  --warning: #ffb86c;
+  --error: #ff5555;
+  --info: #8be9fd;
+
+  /* Link Colors */
+  --link: #8be9fd;
+  --link-hover: #ba9cf9;
+  --link-active: #bd93f9;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Semantic colors */
+  --color-foreground-muted: var(--foreground-muted);
+  --color-background-elevated: var(--background-elevated);
+  --color-background-surface: var(--background-surface);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+
+  /* Input colors */
+  --color-input-background: var(--input-background);
+  --color-input-border: var(--input-border);
+  --color-input-border-focus: var(--input-border-focus);
+  --color-input-text: var(--input-text);
+  --color-input-placeholder: var(--input-placeholder);
+
+  /* Status colors */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  /* Link colors */
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+
+  /* Custom color extensions for Tailwind */
+  --color-sprd-background: #282a36;
+  --color-sprd-current: #44475a;
+  --color-sprd-selection: #44475a;
+  --color-sprd-foreground: #f8f8f2;
+  --color-sprd-comment: #6272a4;
+  --color-sprd-cyan: #8be9fd;
+  --color-sprd-green: #50fa7b;
+  --color-sprd-orange: #ffb86c;
+  --color-sprd-pink: #ff79c6;
+  --color-sprd-purple: #bd93f9;
+  --color-sprd-red: #ff5555;
+  --color-sprd-yellow: #f1fa8c;
+
+  /* Custom shadows */
+  --shadow-card: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 15px 20px -5px rgba(0, 0, 0, 0.6);
+  --shadow-input-focus: 0 0 0 3px rgba(189, 147, 249, 0.3);
+  --shadow-input-error: 0 0 0 3px rgba(255, 85, 85, 0.3);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Custom Input Focus States */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Global Link Styles */
+a {
+  color: var(--link);
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+a.active {
+  color: var(--link-active);
+}
+
+/* Button Variants */
+.btn-primary {
+  background-color: var(--button-primary-bg);
+  color: var(--button-primary-text);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--button-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--button-secondary-hover);
+}
+
+.btn-info {
+  background-color: var(--info);
+  color: var(--sprd-background);
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: var(--button-info-hover);
+}
+
+.btn-success {
+  background-color: var(--success);
+  color: var(--sprd-background);
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: var(--button-success-hover);
+}
+
+.btn-error {
+  background-color: var(--error);
+  color: var(--foreground);
+}
+
+.btn-error:hover:not(:disabled) {
+  background-color: var(--button-error-hover);
+}
+
+.btn-warning {
+  background-color: var(--warning);
+  color: var(--sprd-background);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: var(--button-warning-hover);
+}
+
+/* Custom Shadow Classes */
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+.shadow-card-hover:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Notistack (snackbar) centering fixes across viewports */
+/*
+  Notistack places anchor containers with fixed positioning.
+  Some layouts or parent containers can offset them; force the
+  top/bottom center anchors to span full width and center children.
+*/
+.notistack-anchorOriginTopCenter,
+.notistack-anchorOriginBottomCenter,
+.MuiSnackbar-anchorOriginTopCenter,
+.MuiSnackbar-anchorOriginBottomCenter {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 12px; /* small horizontal padding for mobile */
+  pointer-events: none; /* container shouldn't block clicks */
+  z-index: 9999;
+}
+
+/* Target snackbar wrapper itself (handles auto-generated class names) */
+.notistack-Snackbar,
+.notistack-snackbar,
+.MuiSnackbar-root {
+  display: flex !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* Keep the visual snackbar content centered and constrained; make interactive */
+.notistack-Snackbar > div,
+.notistack-snackbar > div,
+.MuiSnackbar-root > div {
+  display: flex;
+  justify-content: center;
+  min-width: 280px;
+  max-width: 400px;
+  width: auto;
+  margin: 8px auto;
+  pointer-events: auto; /* allow clicks inside snackbar */
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}

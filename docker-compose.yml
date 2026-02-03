@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:17-alpine
+    container_name: sprout-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - sprout-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # API Service
+  api:
+    image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
+    container_name: sprout-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      API_PREFIX: ${API_PREFIX}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sprout-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: sh -c "npx prisma migrate deploy && node dist/index.js"
+
+  # UI Service
+  ui:
+    image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
+    container_name: sprout-ui
+    restart: unless-stopped
+    ports:
+      - "${UI_PORT}:3000"
+    environment:
+      NODE_ENV: ${NODE_ENV}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - sprout-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+networks:
+  sprout-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
