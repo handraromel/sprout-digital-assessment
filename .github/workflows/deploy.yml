@@ -250,8 +250,7 @@ jobs:
           script: |
             cd ~/sprout-digital-assessment
 
-            # Wait for services to be healthy
-            echo "Waiting for services to be healthy..."
+            echo "Waiting for services to be ready..."
             sleep 30
 
             # Check service health
