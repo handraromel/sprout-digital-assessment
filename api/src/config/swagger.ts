@@ -1,10 +1,9 @@
 import path from "path";
 
-// Only load swagger in development
+// Dev only swagger setup
 let swaggerSpec: object | null = null;
 
 if (process.env.NODE_ENV !== "production") {
-  // Dynamic import to avoid loading swagger in production
   const swaggerJsdoc = require("swagger-jsdoc");
 
   const options = {
