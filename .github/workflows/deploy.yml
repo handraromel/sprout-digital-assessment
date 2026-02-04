@@ -76,6 +76,7 @@ jobs:
             ${{ env.DOCKER_API_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.DOCKER_API_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_API_IMAGE }}:buildcache,mode=max
+          platforms: linux/amd64,linux/arm64
 
       - name: Build and push UI image
         uses: docker/build-push-action@v6
@@ -90,6 +91,7 @@ jobs:
             ${{ env.DOCKER_UI_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache,mode=max
+          platforms: linux/amd64,linux/arm64
 
   deploy:
     name: Deploy to Production
@@ -214,8 +216,11 @@ jobs:
             docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
             docker compose --env-file .env.prod down || true
             docker compose --env-file .env.prod up -d
-            sleep 15
+            sleep 20
+            echo "=== Container Status ==="
             docker compose --env-file .env.prod ps
+            echo "=== API Logs ==="
+            docker compose --env-file .env.prod logs api --tail=50
             docker image prune -af
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
