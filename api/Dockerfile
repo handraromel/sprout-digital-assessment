@@ -18,6 +18,9 @@ RUN npx prisma generate
 # Build TypeScript
 RUN npm run build
 
+# Verify build output
+RUN ls -la /app/dist && echo "✅ Build successful - dist folder created"
+
 # Production stage
 FROM node:22-alpine
 
