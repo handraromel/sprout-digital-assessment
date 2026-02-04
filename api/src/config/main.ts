@@ -3,12 +3,10 @@
  * Centralizes all middleware and application setup
  */
 
-import { swaggerSpec } from "@/config/swagger";
 import cors from "cors";
 import express, { Express } from "express";
 import helmet from "helmet";
 import morgan from "morgan";
-import swaggerUi from "swagger-ui-express";
 
 /**
  * Configure Express app with all middleware
@@ -41,10 +39,14 @@ export const configureRoutes = (app: Express, routes: express.Router): void => {
 };
 
 /**
- * Configure Swagger documentation
+ * Configure Swagger documentation (development only)
  */
 export const configureSwagger = (app: Express): void => {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  if (process.env.NODE_ENV !== "production") {
+    const swaggerUi = require("swagger-ui-express");
+    const { swaggerSpec } = require("@/config/swagger");
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  }
 };
 
 /**

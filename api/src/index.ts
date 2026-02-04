@@ -27,9 +27,11 @@ configureErrorHandling(app);
 // Start server
 app.listen(PORT, () => {
   console.log(`${APP_MESSAGES.SERVER_STARTED} http://localhost:${PORT}`);
-  console.log(
-    `${APP_MESSAGES.SWAGGER_AVAILABLE} http://localhost:${PORT}/api-docs`,
-  );
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      `${APP_MESSAGES.SWAGGER_AVAILABLE} http://localhost:${PORT}/api-docs`,
+    );
+  }
   console.log(
     `${APP_MESSAGES.HEALTH_CHECK_AVAILABLE} http://localhost:${PORT}/health`,
   );
