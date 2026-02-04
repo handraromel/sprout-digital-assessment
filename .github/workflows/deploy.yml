@@ -124,23 +124,34 @@ jobs:
             mkdir -p ~/sprout-digital-assessment
             cd ~/sprout-digital-assessment
 
-            # Create production environment file
-            cat > .env.prod << ENVEOF
-            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
-            POSTGRES_USER=${POSTGRES_USER}
-            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            POSTGRES_DB=${POSTGRES_DB}
-            API_PORT=${API_PORT}
-            UI_PORT=${UI_PORT}
-            NODE_ENV=${NODE_ENV}
-            JWT_SECRET=${JWT_SECRET}
-            JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-            JWT_ACCESS_EXPIRY=${JWT_ACCESS_EXPIRY}
-            JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}
-            CORS_ORIGIN=${CORS_ORIGIN}
-            API_PREFIX=${API_PREFIX}
-            VITE_API_BASE_URL=${VITE_API_BASE_URL}
-            ENVEOF
+            # Debug: Check environment variables
+            echo "Checking environment variables..."
+            echo "DOCKERHUB_USERNAME: ${DOCKERHUB_USERNAME}"
+            echo "POSTGRES_USER: ${POSTGRES_USER}"
+            echo "API_PORT: ${API_PORT}"
+
+            # Create production environment file using printf for better control
+            printf "%s\n" \
+              "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" \
+              "POSTGRES_USER=${POSTGRES_USER}" \
+              "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
+              "POSTGRES_DB=${POSTGRES_DB}" \
+              "API_PORT=${API_PORT}" \
+              "UI_PORT=${UI_PORT}" \
+              "NODE_ENV=${NODE_ENV}" \
+              "JWT_SECRET=${JWT_SECRET}" \
+              "JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}" \
+              "JWT_ACCESS_EXPIRY=${JWT_ACCESS_EXPIRY}" \
+              "JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}" \
+              "CORS_ORIGIN=${CORS_ORIGIN}" \
+              "API_PREFIX=${API_PREFIX}" \
+              "VITE_API_BASE_URL=${VITE_API_BASE_URL}" \
+              > .env.prod
+
+            # Verify .env.prod file was created correctly
+            echo "=== Contents of .env.prod ==="
+            cat .env.prod
+            echo "=== End of .env.prod ==="
 
             # Create docker-compose.yml directly on server
             cat > docker-compose.yml << 'COMPOSEEOF'
@@ -233,8 +244,20 @@ jobs:
             # Stop and remove old containers
             docker compose --env-file .env.prod down || true
 
-            # Start new containers
+            # Start new containers with detailed logging
+            echo "=== Starting containers ==="
             docker compose --env-file .env.prod up -d
+
+            # Wait a bit for containers to initialize
+            sleep 10
+
+            # Check container status
+            echo "=== Container status ==="
+            docker compose --env-file .env.prod ps
+
+            # Check API logs for any errors
+            echo "=== API container logs ==="
+            docker compose --env-file .env.prod logs api --tail=30
 
             # Clean up unused images
             docker image prune -af
@@ -271,19 +294,28 @@ jobs:
             cd ~/sprout-digital-assessment
 
             echo "Waiting for services to be ready..."
-            sleep 30
+            sleep 60
 
             # Check service health
+            echo "=== Current container status ==="
             docker compose --env-file .env.prod ps
-            docker compose --env-file .env.prod logs --tail=50
+
+            echo "=== Database logs ==="
+            docker compose --env-file .env.prod logs db --tail=20
+
+            echo "=== API logs ==="
+            docker compose --env-file .env.prod logs api --tail=50
+
+            echo "=== UI logs ==="
+            docker compose --env-file .env.prod logs ui --tail=20
 
             # Test API endpoint
             echo "Testing API endpoint..."
-            curl -sf http://localhost:${API_PORT}/health && echo "API OK" || echo "API health check failed"
+            curl -sf http://localhost:${API_PORT}/health && echo "✅ API OK" || echo "❌ API health check failed"
 
             # Test UI endpoint
             echo "Testing UI endpoint..."
-            curl -sf http://localhost:${UI_PORT} > /dev/null && echo "UI OK" || echo "UI health check failed"
+            curl -sf http://localhost:${UI_PORT} > /dev/null && echo "✅ UI OK" || echo "❌ UI health check failed"
         env:
           API_PORT: ${{ secrets.API_PORT }}
           UI_PORT: ${{ secrets.UI_PORT }}
