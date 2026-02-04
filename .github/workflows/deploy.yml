@@ -117,35 +117,37 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SERVER_PORT }}
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,API_PORT,UI_PORT,NODE_ENV,JWT_SECRET,JWT_REFRESH_SECRET,JWT_ACCESS_EXPIRY,JWT_REFRESH_EXPIRY,CORS_ORIGIN,API_PREFIX,VITE_API_BASE_URL
           script: |
             # Create and navigate to project directory
             mkdir -p ~/sprout-digital-assessment
             cd ~/sprout-digital-assessment
 
             # Create production environment file
-            cat << EOF > .env.prod
-            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            API_PORT=${{ secrets.API_PORT }}
-            UI_PORT=${{ secrets.UI_PORT }}
-            NODE_ENV=${{ secrets.NODE_ENV }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
-            JWT_ACCESS_EXPIRY=${{ secrets.JWT_ACCESS_EXPIRY }}
-            JWT_REFRESH_EXPIRY=${{ secrets.JWT_REFRESH_EXPIRY }}
-            CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-            API_PREFIX=${{ secrets.API_PREFIX }}
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
-            EOF
+            cat > .env.prod << ENVEOF
+            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+            POSTGRES_USER=${POSTGRES_USER}
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            POSTGRES_DB=${POSTGRES_DB}
+            API_PORT=${API_PORT}
+            UI_PORT=${UI_PORT}
+            NODE_ENV=${NODE_ENV}
+            JWT_SECRET=${JWT_SECRET}
+            JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+            JWT_ACCESS_EXPIRY=${JWT_ACCESS_EXPIRY}
+            JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}
+            CORS_ORIGIN=${CORS_ORIGIN}
+            API_PREFIX=${API_PREFIX}
+            VITE_API_BASE_URL=${VITE_API_BASE_URL}
+            ENVEOF
 
             # Create docker-compose.yml directly on server
-            cat << 'EOF' > docker-compose.yml
+            cat > docker-compose.yml << 'COMPOSEEOF'
             services:
               db:
                 image: postgres:17-alpine
-                container_name: sprout-db
+                container_name: sda-db
                 restart: unless-stopped
                 environment:
                   POSTGRES_USER: ${POSTGRES_USER}
@@ -155,7 +157,7 @@ jobs:
                 volumes:
                   - postgres_data:/var/lib/postgresql/data
                 networks:
-                  - sprout-network
+                  - sda-network
                 healthcheck:
                   test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
                   interval: 10s
@@ -164,8 +166,8 @@ jobs:
                   start_period: 10s
 
               api:
-                image: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-api:latest
-                container_name: sprout-api
+                image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
+                container_name: sda-api
                 restart: unless-stopped
                 ports:
                   - "${API_PORT}:3000"
@@ -183,7 +185,7 @@ jobs:
                   db:
                     condition: service_healthy
                 networks:
-                  - sprout-network
+                  - sda-network
                 healthcheck:
                   test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
                   interval: 30s
@@ -193,8 +195,8 @@ jobs:
                 command: sh -c "npx prisma migrate deploy && node dist/index.js"
 
               ui:
-                image: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-ui:latest
-                container_name: sprout-ui
+                image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
+                container_name: sda-ui
                 restart: unless-stopped
                 ports:
                   - "${UI_PORT}:3000"
@@ -204,7 +206,7 @@ jobs:
                   api:
                     condition: service_healthy
                 networks:
-                  - sprout-network
+                  - sda-network
                 healthcheck:
                   test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
                   interval: 30s
@@ -213,20 +215,20 @@ jobs:
                   start_period: 5s
 
             networks:
-              sprout-network:
+              sda-network:
                 driver: bridge
 
             volumes:
               postgres_data:
                 driver: local
-            EOF
+            COMPOSEEOF
 
             # Login to Docker Hub
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
             # Pull latest images
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-api:latest
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-ui:latest
+            docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
+            docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
 
             # Stop and remove old containers
             docker compose --env-file .env.prod down || true
@@ -238,7 +240,23 @@ jobs:
             docker image prune -af
 
             # Show running containers
-            docker compose ps
+            docker compose --env-file .env.prod ps
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          API_PORT: ${{ secrets.API_PORT }}
+          UI_PORT: ${{ secrets.UI_PORT }}
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_ACCESS_EXPIRY: ${{ secrets.JWT_ACCESS_EXPIRY }}
+          JWT_REFRESH_EXPIRY: ${{ secrets.JWT_REFRESH_EXPIRY }}
+          CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
+          API_PREFIX: ${{ secrets.API_PREFIX }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.2.0
@@ -247,6 +265,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SERVER_PORT }}
+          envs: API_PORT,UI_PORT
           script: |
             cd ~/sprout-digital-assessment
 
@@ -254,13 +274,16 @@ jobs:
             sleep 30
 
             # Check service health
-            docker compose ps
-            docker compose logs --tail=50
+            docker compose --env-file .env.prod ps
+            docker compose --env-file .env.prod logs --tail=50
 
             # Test API endpoint
             echo "Testing API endpoint..."
-            curl -sf http://localhost:${{ secrets.API_PORT }}/health && echo "API OK" || echo "API health check failed"
+            curl -sf http://localhost:${API_PORT}/health && echo "API OK" || echo "API health check failed"
 
             # Test UI endpoint
             echo "Testing UI endpoint..."
-            curl -sf http://localhost:${{ secrets.UI_PORT }} > /dev/null && echo "UI OK" || echo "UI health check failed"
+            curl -sf http://localhost:${UI_PORT} > /dev/null && echo "UI OK" || echo "UI health check failed"
+        env:
+          API_PORT: ${{ secrets.API_PORT }}
+          UI_PORT: ${{ secrets.UI_PORT }}
