@@ -3,7 +3,7 @@
  * Represents the User entity and related operations
  */
 
-import { User as PrismaUser } from "@prisma/generated/client";
+import { User as PrismaUser } from "../../../generated/prisma/client";
 
 export type User = PrismaUser;
 
