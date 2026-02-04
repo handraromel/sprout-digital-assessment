@@ -30,31 +30,20 @@ jobs:
             ui/package-lock.json
 
       - name: Install UI dependencies
-        run: |
-          cd ui
-          npm ci
+        run: cd ui && npm ci
 
       - name: Run UI lint
-        run: |
-          cd ui
-          npm run lint
+        run: cd ui && npm run lint
         continue-on-error: true
 
       - name: Install API dependencies
-        run: |
-          cd api
-          npm ci
+        run: cd api && npm ci
 
       - name: Generate Prisma Client
-        run: |
-          cd api
-          npx prisma generate
+        run: cd api && npx prisma generate
 
       - name: Build API (TypeScript check)
-        run: |
-          cd api
-          npm run build
-        continue-on-error: true
+        run: cd api && npm run build
 
   build-and-push:
     name: Build & Push Docker Images
@@ -87,7 +76,6 @@ jobs:
             ${{ env.DOCKER_API_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.DOCKER_API_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_API_IMAGE }}:buildcache,mode=max
-          platforms: linux/amd64,linux/arm64
 
       - name: Build and push UI image
         uses: docker/build-push-action@v6
@@ -102,7 +90,6 @@ jobs:
             ${{ env.DOCKER_UI_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache,mode=max
-          platforms: linux/amd64,linux/arm64
 
   deploy:
     name: Deploy to Production
@@ -112,9 +99,6 @@ jobs:
     environment: sprout-digital-assessment
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -123,42 +107,29 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SERVER_PORT }}
-          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,API_PORT,UI_PORT,NODE_ENV,JWT_SECRET,JWT_REFRESH_SECRET,JWT_ACCESS_EXPIRY,JWT_REFRESH_EXPIRY,CORS_ORIGIN,API_PREFIX,VITE_API_BASE_URL
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,API_PORT,UI_PORT,NODE_ENV,JWT_SECRET,JWT_REFRESH_SECRET,JWT_ACCESS_EXPIRY,JWT_REFRESH_EXPIRY,CORS_ORIGIN,API_PREFIX
           script: |
-            # Create and navigate to project directory
             mkdir -p ~/sprout-digital-assessment
             cd ~/sprout-digital-assessment
 
-            # Debug: Check environment variables
-            echo "Checking environment variables..."
-            echo "DOCKERHUB_USERNAME: ${DOCKERHUB_USERNAME}"
-            echo "POSTGRES_USER: ${POSTGRES_USER}"
-            echo "API_PORT: ${API_PORT}"
+            # Create production environment file
+            cat > .env.prod << EOF
+            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+            POSTGRES_USER=${POSTGRES_USER}
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            POSTGRES_DB=${POSTGRES_DB}
+            API_PORT=${API_PORT}
+            UI_PORT=${UI_PORT}
+            NODE_ENV=${NODE_ENV}
+            JWT_SECRET=${JWT_SECRET}
+            JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+            JWT_ACCESS_EXPIRY=${JWT_ACCESS_EXPIRY}
+            JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}
+            CORS_ORIGIN=${CORS_ORIGIN}
+            API_PREFIX=${API_PREFIX}
+            EOF
 
-            # Create production environment file using printf for better control
-            printf "%s\n" \
-              "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" \
-              "POSTGRES_USER=${POSTGRES_USER}" \
-              "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
-              "POSTGRES_DB=${POSTGRES_DB}" \
-              "API_PORT=${API_PORT}" \
-              "UI_PORT=${UI_PORT}" \
-              "NODE_ENV=${NODE_ENV}" \
-              "JWT_SECRET=${JWT_SECRET}" \
-              "JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}" \
-              "JWT_ACCESS_EXPIRY=${JWT_ACCESS_EXPIRY}" \
-              "JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}" \
-              "CORS_ORIGIN=${CORS_ORIGIN}" \
-              "API_PREFIX=${API_PREFIX}" \
-              "VITE_API_BASE_URL=${VITE_API_BASE_URL}" \
-              > .env.prod
-
-            # Verify .env.prod file was created correctly
-            echo "=== Contents of .env.prod ==="
-            cat .env.prod
-            echo "=== End of .env.prod ==="
-
-            # Create docker-compose.yml directly on server
+            # Create docker-compose.yml
             cat > docker-compose.yml << 'COMPOSEEOF'
             services:
               db:
@@ -208,7 +179,7 @@ jobs:
                   timeout: 10s
                   retries: 3
                   start_period: 40s
-                command: sh -c "npx prisma migrate deploy && node dist/index.js"
+                command: sh -c "npx prisma migrate deploy && node dist/src/index.js"
 
               ui:
                 image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
@@ -216,8 +187,6 @@ jobs:
                 restart: unless-stopped
                 ports:
                   - "${UI_PORT}:3000"
-                environment:
-                  NODE_ENV: production
                 depends_on:
                   api:
                     condition: service_healthy
@@ -239,36 +208,15 @@ jobs:
                 driver: local
             COMPOSEEOF
 
-            # Login to Docker Hub
+            # Login to Docker Hub and deploy
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-
-            # Pull latest images
             docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
             docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
-
-            # Stop and remove old containers
             docker compose --env-file .env.prod down || true
-
-            # Start new containers with detailed logging
-            echo "=== Starting containers ==="
             docker compose --env-file .env.prod up -d
-
-            # Wait a bit for containers to initialize
-            sleep 10
-
-            # Check container status
-            echo "=== Container status ==="
+            sleep 15
             docker compose --env-file .env.prod ps
-
-            # Check API logs for any errors
-            echo "=== API container logs ==="
-            docker compose --env-file .env.prod logs api --tail=30
-
-            # Clean up unused images
             docker image prune -af
-
-            # Show running containers
-            docker compose --env-file .env.prod ps
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -284,7 +232,6 @@ jobs:
           JWT_REFRESH_EXPIRY: ${{ secrets.JWT_REFRESH_EXPIRY }}
           CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
           API_PREFIX: ${{ secrets.API_PREFIX }}
-          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.2.0
@@ -297,30 +244,10 @@ jobs:
           envs: API_PORT,UI_PORT
           script: |
             cd ~/sprout-digital-assessment
-
-            echo "Waiting for services to be ready..."
-            sleep 60
-
-            # Check service health
-            echo "=== Current container status ==="
+            sleep 45
             docker compose --env-file .env.prod ps
-
-            echo "=== Database logs ==="
-            docker compose --env-file .env.prod logs db --tail=20
-
-            echo "=== API logs ==="
-            docker compose --env-file .env.prod logs api --tail=50
-
-            echo "=== UI logs ==="
-            docker compose --env-file .env.prod logs ui --tail=20
-
-            # Test API endpoint
-            echo "Testing API endpoint..."
-            curl -sf http://localhost:${API_PORT}/health && echo "✅ API OK" || echo "❌ API health check failed"
-
-            # Test UI endpoint
-            echo "Testing UI endpoint..."
-            curl -sf http://localhost:${UI_PORT} > /dev/null && echo "✅ UI OK" || echo "❌ UI health check failed"
+            curl -sf http://localhost:${API_PORT}/health && echo "✅ API OK" || echo "❌ API failed"
+            curl -sf http://localhost:${UI_PORT} > /dev/null && echo "✅ UI OK" || echo "❌ UI failed"
         env:
           API_PORT: ${{ secrets.API_PORT }}
           UI_PORT: ${{ secrets.UI_PORT }}
