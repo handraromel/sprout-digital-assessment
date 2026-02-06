@@ -1,4 +1,5 @@
 import { Router } from "express";
+import accountRoutes from "./account.routes";
 import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
 
@@ -8,6 +9,9 @@ const router = Router();
  * API Routes
  * Prefix all routes with /api
  */
+
+// Account routes (Chart of Accounts)
+router.use("/accounts", accountRoutes);
 
 // Auth routes
 router.use("/auth", authRoutes);

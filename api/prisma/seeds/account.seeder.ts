@@ -1,0 +1,94 @@
+/**
+ * Account Seeder
+ * Seeds the Chart of Accounts (Daftar Akun)
+ */
+
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
+import { PrismaClient } from "../../generated/prisma/client";
+import { accountSeedData } from "./account.seed";
+
+const connectionString = `${process.env.DATABASE_URL}`;
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+export async function seedAccounts(): Promise<void> {
+  console.log("🌱 Seeding accounts...");
+
+  // Create a map to store created accounts by code for parent reference
+  const accountMap = new Map<string, string>();
+
+  // Sort by code to ensure parents are created before children
+  const sortedData = [...accountSeedData].sort((a, b) =>
+    a.code.localeCompare(b.code),
+  );
+
+  for (const data of sortedData) {
+    const parentId = data.parentCode ? accountMap.get(data.parentCode) : null;
+    const level =
+      data.code.split(".")[0].length === 3
+        ? 0
+        : data.parentCode
+          ? accountMap.get(data.parentCode)
+            ? data.code.split(".").filter((s) => s !== "000").length
+            : 0
+          : 0;
+
+    // Calculate level based on parent
+    let calculatedLevel = 0;
+    if (data.parentCode && accountMap.has(data.parentCode)) {
+      const parentCode = data.parentCode;
+      const parentLevel =
+        parentCode === "100.000" ||
+        parentCode === "200.000" ||
+        parentCode === "300.000" ||
+        parentCode === "400.000" ||
+        parentCode === "500.000"
+          ? 0
+          : parentCode.endsWith("0.000")
+            ? 1
+            : 2;
+      calculatedLevel = parentLevel + 1;
+    }
+
+    const account = await prisma.account.upsert({
+      where: { code: data.code },
+      update: {
+        name: data.name,
+        type: data.type,
+        level: calculatedLevel,
+        balance: data.balance ?? 0,
+        isSystem: data.isSystem ?? false,
+        isControl: data.isControl ?? false,
+        parentId: parentId ?? null,
+      },
+      create: {
+        code: data.code,
+        name: data.name,
+        type: data.type,
+        level: calculatedLevel,
+        balance: data.balance ?? 0,
+        isSystem: data.isSystem ?? false,
+        isControl: data.isControl ?? false,
+        parentId: parentId ?? null,
+      },
+    });
+
+    accountMap.set(data.code, account.id);
+    console.log(`  ✓ ${data.code} - ${data.name}`);
+  }
+
+  console.log(`✅ Seeded ${sortedData.length} accounts`);
+}
+
+// Run if executed directly
+if (require.main === module) {
+  seedAccounts()
+    .catch((e) => {
+      console.error("❌ Seeding failed:", e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

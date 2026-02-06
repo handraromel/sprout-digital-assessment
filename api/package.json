@@ -4,7 +4,11 @@
   "scripts": {
     "dev": "ts-node-dev --require tsconfig-paths/register --respawn --transpile-only src/index.ts",
     "build": "tsc && tsc-alias",
-    "start": "node dist/src/index.js"
+    "start": "node dist/src/index.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "ts-node --require tsconfig-paths/register prisma/seeds/index.ts"
   },
   "keywords": [],
   "author": "",

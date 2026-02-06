@@ -19,6 +19,10 @@ if (process.env.NODE_ENV !== "production") {
           url: "http://localhost:3000",
           description: "Development server",
         },
+        {
+          url: "https://sprout-digital-assessment.handraromel.site",
+          description: "Production server",
+        },
       ],
     },
     apis: [path.join(__dirname, "../docs/swagger.docs.ts")],

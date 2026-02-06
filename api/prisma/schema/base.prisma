@@ -1,0 +1,11 @@
+// Prisma Schema - Generator & Datasource Configuration
+// Documentation: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

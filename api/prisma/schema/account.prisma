@@ -1,0 +1,38 @@
+// Account Model Schema (Chart of Accounts)
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+model Account {
+  id        String      @id @default(uuid())
+  code      String      @unique @db.VarChar(20)
+  name      String      @db.VarChar(255)
+  type      AccountType
+  level     Int         @default(0) @db.SmallInt
+  balance   Decimal     @default(0) @db.Decimal(18, 2)
+  isSystem  Boolean     @default(false) @map("is_system")
+  isControl Boolean     @default(false) @map("is_control")
+  isActive  Boolean     @default(true) @map("is_active")
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Self-referencing relation for hierarchy
+  parentId  String?  @map("parent_id")
+  parent    Account? @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Account[] @relation("AccountHierarchy")
+
+  // Created by user relation
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("AccountCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([code])
+  @@index([parentId])
+  @@index([type])
+  @@index([level])
+  @@map("accounts")
+}

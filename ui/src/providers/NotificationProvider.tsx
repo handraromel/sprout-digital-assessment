@@ -36,29 +36,29 @@ const CustomSnackbar = forwardRef<HTMLDivElement, CustomContentProps>(
 
     const variantStyles = {
       default: {
-        backgroundColor: "var(--sprd-current-line)",
-        color: "var(--sprd-foreground)",
-        borderColor: "var(--sprd-comment)",
+        backgroundColor: "var(--notification-default-bg)",
+        color: "var(--notification-default-text)",
+        borderColor: "var(--notification-default-border)",
       },
       success: {
-        backgroundColor: "var(--sprd-green)",
-        color: "var(--sprd-foreground)",
-        borderColor: "var(--sprd-green)",
+        backgroundColor: "var(--notification-success-bg)",
+        color: "var(--notification-success-text)",
+        borderColor: "var(--notification-success-border)",
       },
       error: {
-        backgroundColor: "var(--sprd-red)",
-        color: "var(--sprd-foreground)",
-        borderColor: "var(--sprd-red)",
+        backgroundColor: "var(--notification-error-bg)",
+        color: "var(--notification-error-text)",
+        borderColor: "var(--notification-error-border)",
       },
       warning: {
-        backgroundColor: "var(--sprd-orange)",
-        color: "var(--sprd-foreground)",
-        borderColor: "var(--sprd-orange)",
+        backgroundColor: "var(--notification-warning-bg)",
+        color: "var(--notification-warning-text)",
+        borderColor: "var(--notification-warning-border)",
       },
       info: {
-        backgroundColor: "var(--sprd-cyan)",
-        color: "var(--sprd-foreground)",
-        borderColor: "var(--sprd-cyan)",
+        backgroundColor: "var(--notification-info-bg)",
+        color: "var(--notification-info-text)",
+        borderColor: "var(--notification-info-border)",
       },
     };
 
@@ -114,7 +114,7 @@ const CustomSnackbar = forwardRef<HTMLDivElement, CustomContentProps>(
               style={{
                 width: "18px",
                 height: "18px",
-                color: "var(--sprd-secondary)",
+                color: "currentColor",
               }}
             />
           </button>
