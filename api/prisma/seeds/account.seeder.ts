@@ -4,7 +4,6 @@
  */
 
 import { PrismaPg } from "@prisma/adapter-pg";
-import "dotenv/config";
 import { PrismaClient } from "../../generated/prisma/client";
 import { accountSeedData } from "./account.seed";
 
@@ -98,14 +97,4 @@ export async function seedAccounts(): Promise<void> {
   } finally {
     await prisma.$disconnect();
   }
-}
-
-// Run if executed directly
-if (require.main === module) {
-  seedAccounts()
-    .then(() => process.exit(0))
-    .catch((e) => {
-      console.error("❌ Account Seeding failed:", e);
-      process.exit(1);
-    });
 }
