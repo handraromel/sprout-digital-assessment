@@ -98,3 +98,13 @@ export async function seedAccounts(): Promise<void> {
     await prisma.$disconnect();
   }
 }
+
+// Run if executed directly
+if (require.main === module) {
+  seedAccounts()
+    .then(() => process.exit(0))
+    .catch((e) => {
+      console.error("❌ Account Seeding failed:", e);
+      process.exit(1);
+    });
+}

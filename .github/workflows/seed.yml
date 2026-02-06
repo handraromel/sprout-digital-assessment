@@ -26,6 +26,25 @@ jobs:
     environment: sprout-digital-assessment
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        run: cd api && npm ci
+
+      - name: Generate Prisma Client
+        run: cd api && npx prisma generate
+
+      - name: Build TypeScript
+        run: cd api && npm run build
+
       - name: Run database seeding on production
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -34,25 +53,40 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SERVER_PORT }}
-          envs: SEED_MODULE
-          script_stop: true
+          envs: SEED_MODULE,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
           script: |
-            set -e
             cd ~/sprout-digital-assessment
 
-            echo "🌱 Running database seeding (module: ${SEED_MODULE})..."
+            # Get the database URL from the running container
+            DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
 
             # Run seeding inside the API container
-            # DATABASE_URL is already set in the container's environment via docker-compose
-            if [ "${SEED_MODULE}" = "all" ]; then
-              docker compose --env-file .env.prod exec -T api node dist/prisma/seeds/index.js
-            else
-              docker compose --env-file .env.prod exec -T api node dist/prisma/seeds/index.js "${SEED_MODULE}"
+            docker compose --env-file .env.prod exec -T api sh -c "
+              export DATABASE_URL='${DATABASE_URL}'
+              
+              # Run the seed based on module
+              if [ '${SEED_MODULE}' = 'all' ]; then
+                node dist/prisma/seeds/index.js
+              else
+                node dist/prisma/seeds/index.js ${SEED_MODULE}
+              fi
+            "
+
+             # Check the exit code
+            SEED_EXIT_CODE=$?
+
+            if [ $SEED_EXIT_CODE -ne 0 ]; then
+              echo ""
+              echo "❌ Seeding failed with exit code: $SEED_EXIT_CODE"
+              exit 1
             fi
 
             echo "✅ Seeding completed for module: ${SEED_MODULE}"
         env:
           SEED_MODULE: ${{ github.event.inputs.module }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
 
       - name: Verify seeding
         uses: appleboy/ssh-action@v1.2.0
@@ -62,15 +96,15 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SERVER_PORT }}
-          envs: POSTGRES_USER,POSTGRES_DB
-          script_stop: true
+          envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
           script: |
-            set -e
             cd ~/sprout-digital-assessment
 
-            docker compose --env-file .env.prod exec -T db psql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -c "SELECT COUNT(*) as total_accounts FROM accounts;"
+            # Check account count in database
+            docker compose --env-file .env.prod exec -T db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SELECT COUNT(*) as total_accounts FROM accounts;"
 
             echo "✅ Verification completed"
         env:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
