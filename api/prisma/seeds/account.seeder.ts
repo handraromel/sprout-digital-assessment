@@ -8,12 +8,19 @@ import "dotenv/config";
 import { PrismaClient } from "../../generated/prisma/client";
 import { accountSeedData } from "./account.seed";
 
-const connectionString = `${process.env.DATABASE_URL}`;
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+function createPrismaClient(): PrismaClient {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+  const adapter = new PrismaPg({ connectionString });
+  return new PrismaClient({ adapter });
+}
 
 export async function seedAccounts(): Promise<void> {
   console.log("🌱 Seeding accounts...");
+
+  const prisma = createPrismaClient();
 
   // Create a map to store created accounts by code for parent reference
   const accountMap = new Map<string, string>();
@@ -87,17 +94,18 @@ export async function seedAccounts(): Promise<void> {
     console.log(`✅ Seeded ${sortedData.length} accounts`);
   } catch (error) {
     console.error("❌ Account Seeding failed:", error);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
 // Run if executed directly
 if (require.main === module) {
   seedAccounts()
+    .then(() => process.exit(0))
     .catch((e) => {
       console.error("❌ Account Seeding failed:", e);
       process.exit(1);
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
     });
 }
