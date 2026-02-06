@@ -58,7 +58,7 @@ jobs:
             cd ~/sprout-digital-assessment
 
             # Get the database URL from the running container
-            DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}"
+            DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
 
             # Run seeding inside the API container
             docker compose --env-file .env.prod exec -T api sh -c "
@@ -71,6 +71,15 @@ jobs:
                 node dist/prisma/seeds/index.js ${SEED_MODULE}
               fi
             "
+
+            # Check the exit code
+            SEED_EXIT_CODE=$?
+
+            if [ $SEED_EXIT_CODE -ne 0 ]; then
+              echo ""
+              echo "❌ Seeding failed with exit code: $SEED_EXIT_CODE"
+              exit 1
+            fi
 
             echo "✅ Seeding completed for module: ${SEED_MODULE}"
         env:

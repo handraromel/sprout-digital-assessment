@@ -27,23 +27,30 @@ async function main(): Promise<void> {
   const module = (args[0] as SeedModule) || "all";
 
   console.log("🚀 Starting database seeding...\n");
+  console.log(`Module: ${module}\n`);
 
-  if (module === "all") {
-    // Run all seeders in order
-    for (const [name, seeder] of Object.entries(seeders)) {
-      console.log(`\n📦 Running ${name} seeder...`);
-      await seeder();
+  try {
+    if (module === "all") {
+      // Run all seeders in order
+      for (const [name, seeder] of Object.entries(seeders)) {
+        console.log(`\n📦 Running ${name} seeder...`);
+        await seeder();
+      }
+    } else if (module in seeders) {
+      console.log(`📦 Running ${module} seeder...`);
+      await seeders[module]();
+    } else {
+      console.error(`❌ Unknown module: ${module}`);
+      console.log(`Available modules: ${Object.keys(seeders).join(", ")}, all`);
+      process.exit(1);
     }
-  } else if (module in seeders) {
-    console.log(`📦 Running ${module} seeder...`);
-    await seeders[module]();
-  } else {
-    console.error(`❌ Unknown module: ${module}`);
-    console.log(`Available modules: ${Object.keys(seeders).join(", ")}, all`);
+
+    console.log("\n🎉 Seeding completed successfully!");
+    process.exit(0);
+  } catch (error) {
+    console.error("❌ Seeding failed:", error);
     process.exit(1);
   }
-
-  console.log("\n🎉 Seeding completed successfully!");
 }
 
 main()
