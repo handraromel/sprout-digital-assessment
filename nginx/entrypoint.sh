@@ -71,25 +71,3 @@ fi
 
 # Process template with envsubst and output to conf.d
 envsubst '${SERVER_NAME} ${UI_INTERNAL_PORT} ${API_INTERNAL_PORT} ${UI_HOST} ${API_HOST}' < "$TEMPLATE_FILE" > /etc/nginx/conf.d/default.conf
-
-echo "Configuration generated:"
-cat /etc/nginx/conf.d/default.conf
-
-# Test nginx configuration
-echo ""
-echo "Testing nginx configuration..."
-nginx -t
-
-# Log configuration summary
-echo ""
-echo "=== Configuration Summary ==="
-echo "  NGINX_ENV: ${NGINX_ENV}"
-echo "  SERVER_NAME: ${SERVER_NAME}"
-echo "  UI_HOST: ${UI_HOST}:${UI_INTERNAL_PORT}"
-echo "  API_HOST: ${API_HOST}:${API_INTERNAL_PORT}"
-echo "  Template: ${TEMPLATE_FILE}"
-echo "============================="
-echo ""
-
-echo "Starting nginx..."
-exec nginx -g 'daemon off;'
