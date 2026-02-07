@@ -196,8 +196,8 @@ services:
     restart: unless-stopped
     profiles: ["prod"]
     ports:
-      - "8090:80"
-      - "8443:443"
+      - "80:80"
+      - "443:443"
     env_file:
       - ./.env
     environment:
@@ -217,11 +217,9 @@ services:
       test:
         [
           "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost/health",
+          "curl",
+          "-f",
+          "http://127.0.0.1/health",
         ]
       interval: 30s
       timeout: 10s
