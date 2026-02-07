@@ -284,8 +284,3 @@ jobs:
             cd ~/sprout-digital-assessment
             sleep 45
             docker compose --env-file .env.prod ps
-
-            # Check via nginx (localhost)
-            curl -sf http://localhost/health && echo "✅ API health OK (via nginx)" || echo "❌ API health failed"
-            curl -sf http://localhost/ > /dev/null && echo "✅ UI OK (via nginx)" || echo "❌ UI failed"
-            curl -sf http://localhost/api/v1 > /dev/null && echo "✅ API endpoint OK" || echo "⚠️ API endpoint check skipped"
