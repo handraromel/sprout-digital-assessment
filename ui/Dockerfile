@@ -1,20 +1,48 @@
-# Build stage
-FROM node:22-alpine AS builder
+# ===========================================
+# Base Stage - Common setup
+# ===========================================
+FROM node:22-alpine AS base
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
+
+# ===========================================
+# Development Stage
+# ===========================================
+FROM base AS development
+
+# Install ALL dependencies (including devDependencies)
+RUN npm ci
+
+# Copy config files needed for Vite
+COPY tsconfig*.json ./
+COPY vite.config.ts ./
+COPY eslint.config.js ./
+COPY index.html ./
+
+# Note: Source code will be mounted as volume for hot-reload
+EXPOSE 5173
+
+# Use Vite dev server with host flag for Docker networking
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+# ===========================================
+# Builder Stage - For production build
+# ===========================================
+FROM base AS builder
+
 RUN npm ci && npm cache clean --force
 
 COPY . .
 
-ARG VITE_API_BASE_URL
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-
 RUN npm run build
 
-# Production stage
-FROM node:22-alpine
+# ===========================================
+# Production Stage
+# ===========================================
+FROM node:22-alpine AS production
 
 RUN apk add --no-cache dumb-init
 

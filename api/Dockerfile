@@ -1,10 +1,50 @@
-# Build stage
-FROM node:22-alpine AS builder
+# ===========================================
+# Base Stage - Common setup
+# ===========================================
+FROM node:22-alpine AS base
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+
+# ===========================================
+# Development Stage
+# ===========================================
+FROM base AS development
+
+# Install build dependencies for native modules (needed for some npm packages)
+RUN apk add --no-cache python3 make g++
+
+# Install ALL dependencies (including devDependencies)
+RUN npm ci
+
+# Copy prisma schema for client generation
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+
+# Copy tsconfig for TypeScript compilation (needed for prisma client compilation)
+COPY tsconfig.json ./
+
+# Generate Prisma Client and compile TypeScript to JavaScript
+# Node.js 22 has issues with ESM detection in .ts files, so we pre-compile to CommonJS
+RUN npx prisma generate && \
+    cd ./generated/prisma && \
+    npx tsc --target ES2020 --module commonjs --declaration --skipLibCheck --esModuleInterop ./*.ts ./internal/*.ts ./models/*.ts && \
+    cd ../.. && \
+    echo '{"type":"commonjs"}' > ./generated/prisma/package.json
+
+# Note: Source code will be mounted as volume for hot-reload
+EXPOSE 3000
+
+# Use ts-node-dev for hot-reload
+# --poll flag ensures file changes are detected in Docker volumes (especially on Windows)
+CMD ["npx", "ts-node-dev", "--require", "tsconfig-paths/register", "--respawn", "--transpile-only", "--poll", "src/index.ts"]
+
+# ===========================================
+# Builder Stage - For production build
+# ===========================================
+FROM base AS builder
 
 # Install ALL dependencies (including devDependencies for build)
 RUN npm ci
@@ -12,8 +52,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Generate Prisma Client
-RUN npx prisma generate
+# Generate Prisma Client and mark generated folder as CommonJS
+RUN npx prisma generate && \
+    echo '{"type":"commonjs"}' > ./generated/prisma/package.json
 
 # Build TypeScript with path alias resolution
 RUN npm run build
@@ -21,8 +62,10 @@ RUN npm run build
 # Verify build output exists
 RUN ls -la /app/dist/src && test -f /app/dist/src/index.js && echo "✅ Build successful"
 
-# Production stage
-FROM node:22-alpine
+# ===========================================
+# Production Stage
+# ===========================================
+FROM node:22-alpine AS production
 
 WORKDIR /app
 

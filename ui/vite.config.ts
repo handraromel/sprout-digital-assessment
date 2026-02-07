@@ -11,4 +11,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    allowedHosts: [
+      "sda-dev.local",
+      "sprout-digital-assessment.handraromel.site",
+    ],
+  },
 });

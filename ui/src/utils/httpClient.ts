@@ -34,7 +34,7 @@ export class HttpError extends Error {
 
 // Default configuration
 const defaultConfig: HttpClientConfig = {
-  baseURL: import.meta.env.VITE_API_BASE_URL || "",
+  baseURL: "",
   headers: {
     "Content-Type": "application/json",
   },

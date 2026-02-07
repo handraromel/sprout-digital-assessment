@@ -4,15 +4,18 @@
  *
  * Usage:
  *   npx ts-node prisma/seeds/index.ts           # Run all seeds
+ *   npx ts-node prisma/seeds/index.ts user      # Run specific module
  *   npx ts-node prisma/seeds/index.ts account   # Run specific module
  */
 
 import "dotenv/config";
 import { seedAccounts } from "./account.seeder";
+import { seedUsers } from "./user.seeder";
 
-type SeedModule = "account" | "all";
+type SeedModule = "user" | "account" | "all";
 
 const seeders: Record<Exclude<SeedModule, "all">, () => Promise<void>> = {
+  user: seedUsers,
   account: seedAccounts,
 };
 

@@ -10,6 +10,7 @@ on:
 env:
   DOCKER_API_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-api
   DOCKER_UI_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-ui
+  DOCKER_NGINX_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/sprout-digital-assessment-nginx
 
 jobs:
   lint-and-test:
@@ -84,13 +85,24 @@ jobs:
           context: ./ui
           file: ./ui/Dockerfile
           push: true
-          build-args: |
-            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
           tags: |
             ${{ env.DOCKER_UI_IMAGE }}:latest
             ${{ env.DOCKER_UI_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_UI_IMAGE }}:buildcache,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push Nginx image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./nginx
+          file: ./nginx/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_NGINX_IMAGE }}:latest
+            ${{ env.DOCKER_NGINX_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.DOCKER_NGINX_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_NGINX_IMAGE }}:buildcache,mode=max
           platforms: linux/amd64,linux/arm64
 
   deploy:
@@ -109,7 +121,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SERVER_PORT }}
-          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,API_PORT,UI_PORT,NODE_ENV,JWT_SECRET,JWT_REFRESH_SECRET,JWT_ACCESS_EXPIRY,JWT_REFRESH_EXPIRY,CORS_ORIGIN,API_PREFIX
+          envs: DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,NODE_ENV,JWT_SECRET,JWT_REFRESH_SECRET,JWT_ACCESS_EXPIRY,JWT_REFRESH_EXPIRY,CORS_ORIGIN,API_PREFIX,SERVER_NAME
           script: |
             mkdir -p ~/sprout-digital-assessment
             cd ~/sprout-digital-assessment
@@ -120,8 +132,6 @@ jobs:
             POSTGRES_USER=${POSTGRES_USER}
             POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
             POSTGRES_DB=${POSTGRES_DB}
-            API_PORT=${API_PORT}
-            UI_PORT=${UI_PORT}
             NODE_ENV=${NODE_ENV}
             JWT_SECRET=${JWT_SECRET}
             JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
@@ -129,6 +139,7 @@ jobs:
             JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}
             CORS_ORIGIN=${CORS_ORIGIN}
             API_PREFIX=${API_PREFIX}
+            SERVER_NAME=${SERVER_NAME}
             EOF
 
             # Create docker-compose.yml
@@ -158,8 +169,6 @@ jobs:
                 image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
                 container_name: sda-api
                 restart: unless-stopped
-                ports:
-                  - "${API_PORT}:3000"
                 environment:
                   NODE_ENV: ${NODE_ENV}
                   PORT: 3000
@@ -187,8 +196,6 @@ jobs:
                 image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
                 container_name: sda-ui
                 restart: unless-stopped
-                ports:
-                  - "${UI_PORT}:3000"
                 depends_on:
                   api:
                     condition: service_healthy
@@ -200,6 +207,34 @@ jobs:
                   timeout: 10s
                   retries: 3
                   start_period: 5s
+
+              nginx:
+                image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-nginx:latest
+                container_name: sda-nginx
+                restart: unless-stopped
+                ports:
+                  - "80:80"
+                  - "443:443"
+                environment:
+                  NGINX_ENV: production
+                  SERVER_NAME: ${SERVER_NAME}
+                  UI_INTERNAL_PORT: 3000
+                  API_INTERNAL_PORT: 3000
+                volumes:
+                  - /etc/letsencrypt:/etc/letsencrypt:ro
+                depends_on:
+                  api:
+                    condition: service_healthy
+                  ui:
+                    condition: service_healthy
+                networks:
+                  - sda-network
+                healthcheck:
+                  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 10s
 
             networks:
               sda-network:
@@ -214,13 +249,16 @@ jobs:
             echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
             docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
             docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
+            docker pull ${DOCKERHUB_USERNAME}/sprout-digital-assessment-nginx:latest
             docker compose --env-file .env.prod down || true
             docker compose --env-file .env.prod up -d
-            sleep 20
+            sleep 30
             echo "=== Container Status ==="
             docker compose --env-file .env.prod ps
+            echo "=== Nginx Logs ==="
+            docker compose --env-file .env.prod logs nginx --tail=30
             echo "=== API Logs ==="
-            docker compose --env-file .env.prod logs api --tail=50
+            docker compose --env-file .env.prod logs api --tail=30
             docker image prune -af
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -228,8 +266,6 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          API_PORT: ${{ secrets.API_PORT }}
-          UI_PORT: ${{ secrets.UI_PORT }}
           NODE_ENV: ${{ secrets.NODE_ENV }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
@@ -237,6 +273,7 @@ jobs:
           JWT_REFRESH_EXPIRY: ${{ secrets.JWT_REFRESH_EXPIRY }}
           CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
           API_PREFIX: ${{ secrets.API_PREFIX }}
+          SERVER_NAME: ${{ secrets.SERVER_NAME }}
 
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.2.0
@@ -246,13 +283,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SERVER_PORT }}
-          envs: API_PORT,UI_PORT
           script: |
             cd ~/sprout-digital-assessment
             sleep 45
             docker compose --env-file .env.prod ps
-            curl -sf http://localhost:${API_PORT}/health && echo "✅ API OK" || echo "❌ API failed"
-            curl -sf http://localhost:${UI_PORT} > /dev/null && echo "✅ UI OK" || echo "❌ UI failed"
-        env:
-          API_PORT: ${{ secrets.API_PORT }}
-          UI_PORT: ${{ secrets.UI_PORT }}
+
+            # Check via nginx (localhost)
+            curl -sf http://localhost/health && echo "✅ API health OK (via nginx)" || echo "❌ API health failed"
+            curl -sf http://localhost/ > /dev/null && echo "✅ UI OK (via nginx)" || echo "❌ UI failed"
+            curl -sf http://localhost/api/v1 > /dev/null && echo "✅ API endpoint OK" || echo "⚠️ API endpoint check skipped"

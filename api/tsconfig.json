@@ -18,6 +18,20 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*", "prisma.config.ts", "prisma/seeds/**/*"],
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "commonjs"
+    },
+    "moduleTypes": {
+      "generated/**/*": "cjs"
+    }
+  },
+  "include": [
+    "src/**/*",
+    "prisma.config.ts",
+    "prisma/seeds/**/*",
+    "generated/**/*"
+  ],
   "exclude": ["node_modules", "dist"]
 }

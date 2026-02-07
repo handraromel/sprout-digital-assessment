@@ -1,0 +1,14 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+
+# Editor
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db

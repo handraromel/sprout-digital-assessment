@@ -16,6 +16,7 @@ api/dist
 ui/node_modules
 ui/dist
 api/generated/
+.env
 api/.env
 ui/.env
 

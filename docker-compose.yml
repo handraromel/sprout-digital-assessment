@@ -1,51 +1,86 @@
-version: "3.9"
+# Unified Docker Compose
+# Usage:
+#   Development: docker compose --profile dev up --build
 
 services:
-  # PostgreSQL Database
+  # ===========================================
+  # PostgreSQL Database (shared by dev and prod)
+  # ===========================================
   db:
     image: postgres:17-alpine
-    container_name: sprout-db
+    container_name: sda-db
     restart: unless-stopped
+    profiles: ["dev", "prod"]
+    env_file:
+      - ./.env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     networks:
-      - sprout-network
+      - sda-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-  # API Service
-  api:
-    image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
-    container_name: sprout-api
+  # ===========================================
+  # API Service - Development
+  # ===========================================
+  api-dev:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: development
+    container_name: sda-api
     restart: unless-stopped
-    ports:
-      - "${API_PORT}:3000"
+    profiles: ["dev"]
+    env_file:
+      - ./.env
     environment:
-      NODE_ENV: ${NODE_ENV}
-      PORT: 3000
+      NODE_ENV: development
+      # Override DATABASE_URL to connect to Docker db container
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY}
-      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY}
-      CORS_ORIGIN: ${CORS_ORIGIN}
-      API_PREFIX: ${API_PREFIX}
+    volumes:
+      # Mount source code for hot-reload
+      - ./api/src:/app/src:delegated
+      - ./api/prisma:/app/prisma:delegated
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
     depends_on:
       db:
         condition: service_healthy
     networks:
-      - sprout-network
+      - sda-network
+    # Run migrations on startup, then start dev server
+    command: >
+      sh -c "
+        echo 'Running database migrations...' &&
+        npx prisma migrate deploy &&
+        echo 'Starting development server...' &&
+        npx ts-node-dev --require tsconfig-paths/register --respawn --transpile-only --poll src/index.ts
+      "
+
+  # ===========================================
+  # API Service - Production
+  # ===========================================
+  api-prod:
+    image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
+    container_name: sda-api
+    restart: unless-stopped
+    profiles: ["prod"]
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sda-network
     healthcheck:
       test:
         [
@@ -62,20 +97,41 @@ services:
       start_period: 40s
     command: sh -c "npx prisma migrate deploy && node dist/src/index.js"
 
-  # UI Service
-  ui:
-    image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
-    container_name: sprout-ui
+  # ===========================================
+  # UI Service - Development
+  # ===========================================
+  ui-dev:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+      target: development
+    container_name: sda-ui
     restart: unless-stopped
-    ports:
-      - "${UI_PORT}:3000"
-    environment:
-      NODE_ENV: ${NODE_ENV}
+    profiles: ["dev"]
+    volumes:
+      # Mount source code for hot-reload
+      - ./ui/src:/app/src:delegated
+      - ./ui/public:/app/public:delegated
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
     depends_on:
-      api:
+      - api-dev
+    networks:
+      - sda-network
+
+  # ===========================================
+  # UI Service - Production
+  # ===========================================
+  ui-prod:
+    image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
+    container_name: sda-ui
+    restart: unless-stopped
+    profiles: ["prod"]
+    depends_on:
+      api-prod:
         condition: service_healthy
     networks:
-      - sprout-network
+      - sda-network
     healthcheck:
       test:
         [
@@ -91,8 +147,87 @@ services:
       retries: 3
       start_period: 5s
 
+  # ===========================================
+  # Nginx - Development (HTTP only)
+  # ===========================================
+  nginx-dev:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: sda-nginx
+    restart: unless-stopped
+    profiles: ["dev"]
+    ports:
+      - "80:80"
+    env_file:
+      - ./.env
+    environment:
+      NGINX_ENV: local
+      UI_INTERNAL_PORT: 5173
+      API_INTERNAL_PORT: 3000
+    depends_on:
+      - api-dev
+      - ui-dev
+    networks:
+      - sda-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ===========================================
+  # Nginx - Production (HTTPS)
+  # ===========================================
+  nginx-prod:
+    image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-nginx:latest
+    container_name: sda-nginx
+    restart: unless-stopped
+    profiles: ["prod"]
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - ./.env
+    environment:
+      NGINX_ENV: production
+      UI_INTERNAL_PORT: 3000
+      API_INTERNAL_PORT: 3000
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      api-prod:
+        condition: service_healthy
+      ui-prod:
+        condition: service_healthy
+    networks:
+      - sda-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 networks:
-  sprout-network:
+  sda-network:
     driver: bridge
 
 volumes:
