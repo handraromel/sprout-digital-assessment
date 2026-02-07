@@ -214,7 +214,7 @@ jobs:
                 restart: unless-stopped
                 ports:
                   - "8090:80"
-                  - "443:443"
+                  - "8443:443"
                 environment:
                   NGINX_ENV: production
                   SERVER_NAME: ${SERVER_NAME}
