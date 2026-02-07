@@ -2,12 +2,12 @@
 # HTTPS with SSL termination
 
 upstream ui_upstream {
-    server ui-prod:${UI_INTERNAL_PORT};
+    server ${UI_HOST}:${UI_INTERNAL_PORT};
     keepalive 32;
 }
 
 upstream api_upstream {
-    server api-prod:${API_INTERNAL_PORT};
+    server ${API_HOST}:${API_INTERNAL_PORT};
     keepalive 32;
 }
 

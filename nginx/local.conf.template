@@ -2,12 +2,12 @@
 # HTTP only - no SSL required locally
 
 upstream ui_upstream {
-    server ui-dev:${UI_INTERNAL_PORT};
+    server ${UI_HOST}:${UI_INTERNAL_PORT};
     keepalive 32;
 }
 
 upstream api_upstream {
-    server api-dev:${API_INTERNAL_PORT};
+    server ${API_HOST}:${API_INTERNAL_PORT};
     keepalive 32;
 }
 

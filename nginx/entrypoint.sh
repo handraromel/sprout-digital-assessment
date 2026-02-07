@@ -11,7 +11,16 @@ SERVER_NAME=${SERVER_NAME:-localhost}
 UI_INTERNAL_PORT=${UI_INTERNAL_PORT:-3000}
 API_INTERNAL_PORT=${API_INTERNAL_PORT:-3000}
 
-export SERVER_NAME UI_INTERNAL_PORT API_INTERNAL_PORT
+# Set upstream host defaults based on environment
+if [ "$NGINX_ENV" = "production" ]; then
+    UI_HOST=${UI_HOST:-ui}
+    API_HOST=${API_HOST:-api}
+else
+    UI_HOST=${UI_HOST:-ui-dev}
+    API_HOST=${API_HOST:-api-dev}
+fi
+
+export SERVER_NAME UI_INTERNAL_PORT API_INTERNAL_PORT UI_HOST API_HOST
 
 # Function to wait for a host to be resolvable
 wait_for_host() {
@@ -41,8 +50,8 @@ if [ "$NGINX_ENV" = "production" ]; then
     
     # Wait for upstream services in production
     echo "Waiting for upstream services..."
-    wait_for_host "ui-prod" 30 || { echo "ERROR: ui-prod service not found"; exit 1; }
-    wait_for_host "api-prod" 30 || { echo "ERROR: api-prod service not found"; exit 1; }
+    wait_for_host "$UI_HOST" 30 || { echo "ERROR: $UI_HOST service not found"; exit 1; }
+    wait_for_host "$API_HOST" 30 || { echo "ERROR: $API_HOST service not found"; exit 1; }
     
     # Verify SSL certificates exist
     if [ ! -f "/etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem" ]; then
@@ -56,12 +65,12 @@ else
     
     # Wait for upstream services in development
     echo "Waiting for upstream services..."
-    wait_for_host "ui-dev" 30 || { echo "ERROR: ui-dev service not found"; exit 1; }
-    wait_for_host "api-dev" 30 || { echo "ERROR: api-dev service not found"; exit 1; }
+    wait_for_host "$UI_HOST" 30 || { echo "ERROR: $UI_HOST service not found"; exit 1; }
+    wait_for_host "$API_HOST" 30 || { echo "ERROR: $API_HOST service not found"; exit 1; }
 fi
 
 # Process template with envsubst and output to conf.d
-envsubst '${SERVER_NAME} ${UI_INTERNAL_PORT} ${API_INTERNAL_PORT}' < "$TEMPLATE_FILE" > /etc/nginx/conf.d/default.conf
+envsubst '${SERVER_NAME} ${UI_INTERNAL_PORT} ${API_INTERNAL_PORT} ${UI_HOST} ${API_HOST}' < "$TEMPLATE_FILE" > /etc/nginx/conf.d/default.conf
 
 echo "Configuration generated:"
 cat /etc/nginx/conf.d/default.conf

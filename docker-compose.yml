@@ -163,6 +163,8 @@ services:
       - ./.env
     environment:
       NGINX_ENV: local
+      UI_HOST: ui-dev
+      API_HOST: api-dev
       UI_INTERNAL_PORT: 5173
       API_INTERNAL_PORT: 3000
     depends_on:
