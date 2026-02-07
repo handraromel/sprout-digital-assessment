@@ -65,24 +65,3 @@ fi
 
 # Process template with envsubst and output to conf.d
 envsubst '${SERVER_NAME} ${UI_INTERNAL_PORT} ${API_INTERNAL_PORT} ${UI_HOST} ${API_HOST}' < "$TEMPLATE_FILE" > /etc/nginx/conf.d/default.conf
-
-# Display configuration summary
-echo "========================================"
-echo "Nginx Configuration Summary:"
-echo "  Environment: ${NGINX_ENV}"
-echo "  Server Name: ${SERVER_NAME}"
-echo "  UI upstream: ${UI_HOST}:${UI_INTERNAL_PORT}"
-echo "  API upstream: ${API_HOST}:${API_INTERNAL_PORT}"
-echo "========================================"
-
-# Test nginx configuration
-echo "Testing nginx configuration..."
-nginx -t
-if [ $? -ne 0 ]; then
-    echo "ERROR: Nginx configuration test failed!"
-    cat /etc/nginx/conf.d/default.conf
-    exit 1
-fi
-
-echo "Starting nginx..."
-exec nginx -g "daemon off;"
