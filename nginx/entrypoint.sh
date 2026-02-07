@@ -13,10 +13,36 @@ API_INTERNAL_PORT=${API_INTERNAL_PORT:-3000}
 
 export SERVER_NAME UI_INTERNAL_PORT API_INTERNAL_PORT
 
+# Function to wait for a host to be resolvable
+wait_for_host() {
+    local host=$1
+    local max_attempts=${2:-30}
+    local attempt=1
+    
+    echo "Waiting for $host to be resolvable..."
+    while [ $attempt -le $max_attempts ]; do
+        if getent hosts "$host" > /dev/null 2>&1; then
+            echo "✓ $host is resolvable"
+            return 0
+        fi
+        echo "  Attempt $attempt/$max_attempts: $host not yet resolvable, waiting..."
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+    
+    echo "✗ Failed to resolve $host after $max_attempts attempts"
+    return 1
+}
+
 # Select and process the appropriate template
 if [ "$NGINX_ENV" = "production" ]; then
     echo "Using production configuration for ${SERVER_NAME}"
     TEMPLATE_FILE="/etc/nginx/templates/prod.conf.template"
+    
+    # Wait for upstream services in production
+    echo "Waiting for upstream services..."
+    wait_for_host "ui-prod" 30 || { echo "ERROR: ui-prod service not found"; exit 1; }
+    wait_for_host "api-prod" 30 || { echo "ERROR: api-prod service not found"; exit 1; }
     
     # Verify SSL certificates exist
     if [ ! -f "/etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem" ]; then
@@ -27,6 +53,11 @@ if [ "$NGINX_ENV" = "production" ]; then
 else
     echo "Using local development configuration for ${SERVER_NAME}"
     TEMPLATE_FILE="/etc/nginx/templates/local.conf.template"
+    
+    # Wait for upstream services in development
+    echo "Waiting for upstream services..."
+    wait_for_host "ui-dev" 30 || { echo "ERROR: ui-dev service not found"; exit 1; }
+    wait_for_host "api-dev" 30 || { echo "ERROR: api-dev service not found"; exit 1; }
 fi
 
 # Process template with envsubst and output to conf.d
