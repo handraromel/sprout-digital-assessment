@@ -158,7 +158,7 @@ services:
     restart: unless-stopped
     profiles: ["dev"]
     ports:
-      - "80:80"
+      - "8090:80"
     env_file:
       - ./.env
     environment:
@@ -194,7 +194,7 @@ services:
     restart: unless-stopped
     profiles: ["prod"]
     ports:
-      - "80:80"
+      - "8090:80"
       - "443:443"
     env_file:
       - ./.env
