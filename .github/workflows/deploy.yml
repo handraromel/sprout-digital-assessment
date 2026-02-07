@@ -213,15 +213,12 @@ jobs:
                 container_name: sda-nginx
                 restart: unless-stopped
                 ports:
-                  - "80:80"
-                  - "443:443"
+                  - "8090:80"
                 environment:
                   NGINX_ENV: production
                   SERVER_NAME: ${SERVER_NAME}
                   UI_INTERNAL_PORT: 3000
                   API_INTERNAL_PORT: 3000
-                volumes:
-                  - /etc/letsencrypt:/etc/letsencrypt:ro
                 depends_on:
                   api:
                     condition: service_healthy

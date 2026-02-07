@@ -188,7 +188,7 @@ services:
       start_period: 10s
 
   # ===========================================
-  # Nginx - Production (HTTPS)
+  # Nginx - Production (behind host nginx reverse proxy)
   # ===========================================
   nginx-prod:
     image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-nginx:latest
@@ -196,16 +196,13 @@ services:
     restart: unless-stopped
     profiles: ["prod"]
     ports:
-      - "80:80"
-      - "443:443"
+      - "8090:80"
     env_file:
       - ./.env
     environment:
       NGINX_ENV: production
       UI_INTERNAL_PORT: 3000
       API_INTERNAL_PORT: 3000
-    volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       api-prod:
         condition: service_healthy
@@ -214,13 +211,7 @@ services:
     networks:
       - sda-network
     healthcheck:
-      test:
-        [
-          "CMD",
-          "curl",
-          "-f",
-          "http://127.0.0.1/health",
-        ]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -46,19 +46,13 @@ wait_for_host() {
 # Select and process the appropriate template
 if [ "$NGINX_ENV" = "production" ]; then
     echo "Using production configuration for ${SERVER_NAME}"
+    echo "Note: Running behind host nginx reverse proxy (host handles SSL)"
     TEMPLATE_FILE="/etc/nginx/templates/prod.conf.template"
     
     # Wait for upstream services in production
     echo "Waiting for upstream services..."
     wait_for_host "$UI_HOST" 30 || { echo "ERROR: $UI_HOST service not found"; exit 1; }
     wait_for_host "$API_HOST" 30 || { echo "ERROR: $API_HOST service not found"; exit 1; }
-    
-    # Verify SSL certificates exist
-    if [ ! -f "/etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem" ]; then
-        echo "Warning: SSL certificate not found at /etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem"
-        echo "Falling back to local (HTTP-only) configuration"
-        TEMPLATE_FILE="/etc/nginx/templates/local.conf.template"
-    fi
 else
     echo "Using local development configuration for ${SERVER_NAME}"
     TEMPLATE_FILE="/etc/nginx/templates/local.conf.template"
@@ -71,3 +65,24 @@ fi
 
 # Process template with envsubst and output to conf.d
 envsubst '${SERVER_NAME} ${UI_INTERNAL_PORT} ${API_INTERNAL_PORT} ${UI_HOST} ${API_HOST}' < "$TEMPLATE_FILE" > /etc/nginx/conf.d/default.conf
+
+# Display configuration summary
+echo "========================================"
+echo "Nginx Configuration Summary:"
+echo "  Environment: ${NGINX_ENV}"
+echo "  Server Name: ${SERVER_NAME}"
+echo "  UI upstream: ${UI_HOST}:${UI_INTERNAL_PORT}"
+echo "  API upstream: ${API_HOST}:${API_INTERNAL_PORT}"
+echo "========================================"
+
+# Test nginx configuration
+echo "Testing nginx configuration..."
+nginx -t
+if [ $? -ne 0 ]; then
+    echo "ERROR: Nginx configuration test failed!"
+    cat /etc/nginx/conf.d/default.conf
+    exit 1
+fi
+
+echo "Starting nginx..."
+exec nginx -g "daemon off;"
