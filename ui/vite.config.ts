@@ -16,5 +16,8 @@ export default defineConfig({
       "sda-dev.local",
       "sprout-digital-assessment.handraromel.site",
     ],
+    watch: {
+      usePolling: true,
+    },
   },
 });

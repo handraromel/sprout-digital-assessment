@@ -2,35 +2,86 @@
 
 import { TEXT_INPUT_SIZE_CLASSES } from "@/constants/textField";
 import { type TextFieldProps } from "@/types/textField";
+import { formatCurrencyInput, parseCurrencyInput } from "@/utils";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
+import type { Control, FieldError, FieldValues, Path } from "react-hook-form";
+import { useController } from "react-hook-form";
 import { useCurrencyField } from "./useTextField";
 
-export const TextField = ({
+interface ResolvedControllerProps {
+  fieldValue?: unknown;
+  fieldOnChange?: (...event: unknown[]) => void;
+  fieldOnBlur?: () => void;
+  fieldRef?: React.Ref<HTMLInputElement>;
+  fieldName?: string;
+  fieldError?: FieldError;
+}
+
+function ControlledFieldBridge<TFieldValues extends FieldValues>({
+  control,
+  name,
+  children,
+}: {
+  control: Control<TFieldValues>;
+  name: Path<TFieldValues>;
+  children: (props: ResolvedControllerProps) => React.ReactNode;
+}) {
+  const { field, fieldState } = useController({ control, name });
+  return children({
+    fieldValue: field.value,
+    fieldOnChange: field.onChange,
+    fieldOnBlur: field.onBlur,
+    fieldRef: field.ref,
+    fieldName: field.name,
+    fieldError: fieldState.error,
+  });
+}
+
+function TextFieldInner<TFieldValues extends FieldValues = FieldValues>({
   label,
-  error,
+  error: errorProp,
   icon,
   helperText,
-  register,
+  register: registerProp,
   setValue,
   className = "",
   small,
   large,
   currency,
-  value: initialValue,
+  value: externalValue,
   onChange: onChangeProps,
   type,
+  controllerProps,
   ...props
-}: TextFieldProps) => {
+}: Omit<TextFieldProps<TFieldValues>, "control" | "name"> & {
+  controllerProps?: ResolvedControllerProps;
+}) {
   const size = small ? "small" : large ? "large" : "default";
   const sizeConfig = TEXT_INPUT_SIZE_CLASSES[size];
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Password visibility state
+  const field = controllerProps;
+  const error = errorProp ?? field?.fieldError;
+
+  const register =
+    registerProp ??
+    (field
+      ? {
+          name: field.fieldName!,
+          ref: field.fieldRef as React.RefCallback<HTMLInputElement>,
+          onChange: field.fieldOnChange as (
+            e: React.ChangeEvent<HTMLInputElement>,
+          ) => void,
+          onBlur: field.fieldOnBlur as (
+            e: React.FocusEvent<HTMLInputElement>,
+          ) => void,
+        }
+      : undefined);
+
   const isPasswordType = type === "password";
   const [showPassword, setShowPassword] = useState(false);
 
-  // Determine the actual input type
   const inputType = isPasswordType
     ? showPassword
       ? "text"
@@ -39,7 +90,19 @@ export const TextField = ({
       ? "text"
       : type;
 
-  // Use the currency field hook for all currency-related logic
+  const isControlledCurrency = !!(field && currency);
+
+  const controlledCurrencyDisplay = isControlledCurrency
+    ? formatCurrencyInput((field.fieldValue as number) || 0)
+    : undefined;
+
+  const handleControlledCurrencyChange = isControlledCurrency
+    ? (e: React.ChangeEvent<HTMLInputElement>) => {
+        const parsed = parseCurrencyInput(e.target.value);
+        field.fieldOnChange!(parsed);
+      }
+    : undefined;
+
   const {
     displayValue,
     handleChange,
@@ -47,15 +110,24 @@ export const TextField = ({
     handleFocus,
     getCurrencyLabel,
   } = useCurrencyField({
-    currency,
-    register,
+    currency: isControlledCurrency ? undefined : currency,
+    register: registerProp,
     setValue,
-    initialValue: typeof initialValue === "object" ? undefined : initialValue,
+    initialValue: typeof externalValue === "object" ? undefined : externalValue,
     onChange: onChangeProps,
     onBlur: props.onBlur,
     onFocus: props.onFocus,
     inputRef,
   });
+
+  const showCurrencyPrefix =
+    currency &&
+    (isControlledCurrency ? controlledCurrencyDisplay : displayValue);
+
+  const resolvedValue =
+    !currency && field && !registerProp
+      ? ((field.fieldValue as string) ?? "")
+      : externalValue;
 
   return (
     <div className="w-full">
@@ -67,7 +139,7 @@ export const TextField = ({
         </label>
       )}
       <div className="relative">
-        {currency && displayValue && (
+        {showCurrencyPrefix && (
           <div
             className={`text-foreground-muted pointer-events-none absolute font-medium ${sizeConfig.icon}`}
           >
@@ -79,12 +151,11 @@ export const TextField = ({
             {icon}
           </div>
         )}
-        {/* Input field */}
         <input
           type={inputType}
           className={`bg-input-background text-input-text placeholder:text-input-placeholder w-full rounded-lg border-2 transition-all ${
             sizeConfig.input
-          } ${currency && displayValue ? sizeConfig.inputWithIcon : ""} ${
+          } ${showCurrencyPrefix ? sizeConfig.inputWithIcon : ""} ${
             icon && !currency ? sizeConfig.inputWithIcon : ""
           } ${isPasswordType ? "pr-10" : ""} ${
             error
@@ -95,30 +166,42 @@ export const TextField = ({
           } ${className}`}
           disabled={props.disabled}
           placeholder={props.placeholder}
-          {...(currency
+          {...(isControlledCurrency
             ? {
                 ref: inputRef,
-                value: displayValue,
-                onChange: handleChange,
-                onBlur: handleBlur,
-                onFocus: handleFocus,
-                name: register?.name,
+                value: controlledCurrencyDisplay,
+                onChange: handleControlledCurrencyChange,
+                onBlur: field!.fieldOnBlur as () => void,
+                name: field!.fieldName,
               }
-            : {
-                ...register,
-                ...props,
-                value: initialValue,
-                onChange: onChangeProps,
-              })}
-          onInput={(e) => {
-            if (register?.onChange && !currency) {
-              register.onChange(
-                e as unknown as React.ChangeEvent<HTMLInputElement>,
-              );
-            }
-          }}
+            : currency
+              ? {
+                  ref: inputRef,
+                  value: displayValue,
+                  onChange: handleChange,
+                  onBlur: handleBlur,
+                  onFocus: handleFocus,
+                  name: register?.name,
+                }
+              : field && !registerProp
+                ? {
+                    ref: field.fieldRef as React.RefCallback<HTMLInputElement>,
+                    value: resolvedValue,
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                      field.fieldOnChange!(e);
+                      onChangeProps?.(e);
+                    },
+                    onBlur: field.fieldOnBlur as () => void,
+                    name: field.fieldName,
+                    ...props,
+                  }
+                : {
+                    ...register,
+                    ...props,
+                    value: externalValue,
+                    onChange: onChangeProps,
+                  })}
         />
-        {/* Password visibility toggle */}
         {isPasswordType && (
           <button
             type="button"
@@ -140,4 +223,24 @@ export const TextField = ({
       )}
     </div>
   );
+}
+
+export const TextField = <TFieldValues extends FieldValues = FieldValues>({
+  control,
+  name,
+  ...rest
+}: TextFieldProps<TFieldValues>) => {
+  if (control && name) {
+    return (
+      <ControlledFieldBridge control={control} name={name}>
+        {(controllerProps) => (
+          <TextFieldInner<TFieldValues>
+            {...rest}
+            controllerProps={controllerProps}
+          />
+        )}
+      </ControlledFieldBridge>
+    );
+  }
+  return <TextFieldInner<TFieldValues> {...rest} />;
 };

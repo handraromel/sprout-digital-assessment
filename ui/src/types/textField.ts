@@ -1,4 +1,10 @@
-import { type FieldError, type UseFormRegisterReturn } from "react-hook-form";
+import type {
+  Control,
+  FieldError,
+  FieldValues,
+  Path,
+  UseFormRegisterReturn,
+} from "react-hook-form";
 
 export interface CurrencyConfig {
   symbol: string;
@@ -12,10 +18,9 @@ export type SetValueFn = (
   options?: { shouldValidate?: boolean; shouldDirty?: boolean },
 ) => void;
 
-export interface TextFieldProps extends Omit<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  "size"
-> {
+export interface TextFieldProps<
+  TFieldValues extends FieldValues = FieldValues,
+> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size" | "name"> {
   label?: string;
   error?: FieldError;
   icon?: React.ReactNode;
@@ -25,4 +30,6 @@ export interface TextFieldProps extends Omit<
   register?: UseFormRegisterReturn;
   setValue?: SetValueFn;
   currency?: CurrencyConfig;
+  control?: Control<TFieldValues>;
+  name?: Path<TFieldValues>;
 }

@@ -1,4 +1,4 @@
-import Icon from "@/components/common/customIcons";
+import Icon from "@/components/common/CustomIcons";
 import {
   BUTTON_SIZE_CLASSES,
   BUTTON_VARIANT_CLASSES,

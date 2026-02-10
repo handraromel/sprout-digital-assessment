@@ -155,7 +155,7 @@ export const NotificationProvider = ({
       maxSnack={3}
       autoHideDuration={5000}
       anchorOrigin={{
-        vertical: "bottom",
+        vertical: "top",
         horizontal: "right",
       }}
       preventDuplicate

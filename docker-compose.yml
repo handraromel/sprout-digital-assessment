@@ -46,8 +46,6 @@ services:
       # Mount source code for hot-reload
       - ./api/src:/app/src:delegated
       - ./api/prisma:/app/prisma:delegated
-      # Prevent node_modules from being overwritten
-      - /app/node_modules
     depends_on:
       db:
         condition: service_healthy
@@ -74,8 +72,6 @@ services:
       # Mount source code for hot-reload
       - ./ui/src:/app/src:delegated
       - ./ui/public:/app/public:delegated
-      # Prevent node_modules from being overwritten
-      - /app/node_modules
     depends_on:
       - api-dev
     networks:

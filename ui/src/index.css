@@ -239,12 +239,6 @@ a.active {
   background: #9ca3af;
 }
 
-/* Notistack (snackbar) centering fixes across viewports */
-/*
-  Notistack places anchor containers with fixed positioning.
-  Some layouts or parent containers can offset them; force the
-  top/bottom center anchors to span full width and center children.
-*/
 .notistack-anchorOriginTopCenter,
 .notistack-anchorOriginBottomCenter,
 .MuiSnackbar-anchorOriginTopCenter,
@@ -255,12 +249,11 @@ a.active {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 0 12px; /* small horizontal padding for mobile */
-  pointer-events: none; /* container shouldn't block clicks */
+  padding: 0 12px;
+  pointer-events: none;
   z-index: 9999;
 }
 
-/* Target snackbar wrapper itself (handles auto-generated class names) */
 .notistack-Snackbar,
 .notistack-snackbar,
 .MuiSnackbar-root {
@@ -269,7 +262,6 @@ a.active {
   width: 100% !important;
 }
 
-/* Keep the visual snackbar content centered and constrained; make interactive */
 .notistack-Snackbar > div,
 .notistack-snackbar > div,
 .MuiSnackbar-root > div {
@@ -279,7 +271,7 @@ a.active {
   max-width: 400px;
   width: auto;
   margin: 8px auto;
-  pointer-events: auto; /* allow clicks inside snackbar */
+  pointer-events: auto;
 }
 
 @keyframes shimmer {

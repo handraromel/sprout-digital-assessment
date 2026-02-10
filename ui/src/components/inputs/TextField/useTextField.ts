@@ -32,7 +32,7 @@ export interface UseCurrencyFieldOptions {
 export const useCurrency = (currency?: CurrencyConfig) => {
   const config = useMemo(
     () => ({
-      symbol: currency?.symbol || "$",
+      symbol: currency?.symbol || "Rp",
       position: currency?.position || "prefix",
       decimals: currency?.decimals ?? 2,
     }),
