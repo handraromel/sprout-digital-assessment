@@ -4,7 +4,7 @@
 
 services:
   # ===========================================
-  # PostgreSQL Database
+  # Shared Services for Database
   # ===========================================
   db:
     image: postgres:17-alpine
@@ -27,7 +27,7 @@ services:
       start_period: 10s
 
   # ===========================================
-  # API Service - Development
+  # Development Services
   # ===========================================
   api-dev:
     build:
@@ -62,8 +62,64 @@ services:
         npx ts-node-dev --require tsconfig-paths/register --respawn --transpile-only --poll src/index.ts
       "
 
+  ui-dev:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+      target: development
+    container_name: sda-ui
+    restart: unless-stopped
+    profiles: ["dev"]
+    volumes:
+      # Mount source code for hot-reload
+      - ./ui/src:/app/src:delegated
+      - ./ui/public:/app/public:delegated
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+    depends_on:
+      - api-dev
+    networks:
+      - sda-network
+
+  nginx-dev:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: sda-nginx
+    restart: unless-stopped
+    profiles: ["dev"]
+    ports:
+      - "80:80"
+    env_file:
+      - ./.env
+    environment:
+      NGINX_ENV: local
+      UI_HOST: ui-dev
+      API_HOST: api-dev
+      UI_INTERNAL_PORT: 5173
+      API_INTERNAL_PORT: 3000
+    depends_on:
+      - api-dev
+      - ui-dev
+    networks:
+      - sda-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   # ===========================================
-  # API Service - Production
+  # Production Services
   # ===========================================
   api-prod:
     image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-api:latest
@@ -96,31 +152,6 @@ services:
       start_period: 40s
     command: sh -c "npx prisma migrate deploy && node dist/src/index.js"
 
-  # ===========================================
-  # UI Service - Development
-  # ===========================================
-  ui-dev:
-    build:
-      context: ./ui
-      dockerfile: Dockerfile
-      target: development
-    container_name: sda-ui
-    restart: unless-stopped
-    profiles: ["dev"]
-    volumes:
-      # Mount source code for hot-reload
-      - ./ui/src:/app/src:delegated
-      - ./ui/public:/app/public:delegated
-      # Prevent node_modules from being overwritten
-      - /app/node_modules
-    depends_on:
-      - api-dev
-    networks:
-      - sda-network
-
-  # ===========================================
-  # UI Service - Production
-  # ===========================================
   ui-prod:
     image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-ui:latest
     container_name: sda-ui
@@ -146,49 +177,6 @@ services:
       retries: 3
       start_period: 5s
 
-  # ===========================================
-  # Nginx - Development (HTTP only)
-  # ===========================================
-  nginx-dev:
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: sda-nginx
-    restart: unless-stopped
-    profiles: ["dev"]
-    ports:
-      - "8090:80"
-    env_file:
-      - ./.env
-    environment:
-      NGINX_ENV: local
-      UI_HOST: ui-dev
-      API_HOST: api-dev
-      UI_INTERNAL_PORT: 5173
-      API_INTERNAL_PORT: 3000
-    depends_on:
-      - api-dev
-      - ui-dev
-    networks:
-      - sda-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost/health",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  # ===========================================
-  # Nginx - Production
-  # ===========================================
   nginx-prod:
     image: ${DOCKERHUB_USERNAME}/sprout-digital-assessment-nginx:latest
     container_name: sda-nginx
