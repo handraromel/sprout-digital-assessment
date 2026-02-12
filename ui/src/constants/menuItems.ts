@@ -1,5 +1,9 @@
 import { type MenuItem } from "@/types";
-import { HomeIcon, QueueListIcon } from "@heroicons/react/24/outline";
+import {
+  BookOpenIcon,
+  HomeIcon,
+  QueueListIcon,
+} from "@heroicons/react/24/outline";
 
 export const MENU_ITEMS: MenuItem[] = [
   {
@@ -11,5 +15,10 @@ export const MENU_ITEMS: MenuItem[] = [
     labelKey: "Daftar Akun",
     href: "/accounts",
     icon: QueueListIcon,
+  },
+  {
+    labelKey: "Jurnal Umum",
+    href: "/journals",
+    icon: BookOpenIcon,
   },
 ];

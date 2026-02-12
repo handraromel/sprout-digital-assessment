@@ -4,3 +4,4 @@
 
 export * from "./useAccountMutation";
 export * from "./useAuthMutation";
+export * from "./useJournalMutation";

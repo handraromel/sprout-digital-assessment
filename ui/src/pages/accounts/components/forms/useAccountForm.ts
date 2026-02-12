@@ -14,7 +14,7 @@ import {
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { flattenAccountTreeForDropdown } from "./utils";
+import { flattenAccountTreeForDropdown } from "../../utils";
 
 interface UseAccountFormProps {
   mode: "create" | "edit";

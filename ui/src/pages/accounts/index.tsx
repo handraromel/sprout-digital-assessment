@@ -9,7 +9,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useMemo } from "react";
-import { AccountFormModal } from "./AccountFormModal";
+import { AccountFormModal } from "./components/forms/AccountFormModal";
 import { useAccountsPage } from "./useAccountsPage";
 
 // Recursively calculate total balance of a node and all its children
@@ -91,7 +91,7 @@ export default function AccountsPage() {
         id: "name",
         cell: (row, level) => (
           <span
-            className={level <= 1 ? "uppercase tracking-wide" : ""}
+            className={level <= 1 ? "tracking-wide uppercase" : ""}
             style={{ paddingLeft: `${level * 24}px`, display: "inline-block" }}
           >
             {row.name}
@@ -147,7 +147,7 @@ export default function AccountsPage() {
           }
           return (
             <span
-              className={`text-sm mr-5 ${
+              className={`mr-5 text-sm ${
                 Number(row.balance) < 0 ? "text-red-500" : "text-gray-600"
               }`}
             >

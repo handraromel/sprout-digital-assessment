@@ -86,7 +86,7 @@ export const Modal = ({
                 isFullscreen
                   ? "bg-background-elevated h-full max-h-full w-full max-w-full"
                   : `${SIZE_CLASSES[size]} my-auto max-h-[90vh]`
-              } bg-background-elevated w-full transform overflow-y-auto rounded-xl p-6 shadow-xl [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300`}
+              } bg-background-elevated w-full transform overflow-y-auto rounded-xl p-6 shadow-xl [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent`}
             >
               {/* Header */}
               {(title || showCloseButton) && (

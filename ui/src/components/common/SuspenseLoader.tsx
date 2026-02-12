@@ -70,7 +70,7 @@ export const SuspenseLoader = ({
                 className="h-full bg-linear-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out"
                 style={{ width: `${progress}%` }}
               >
-                <div className="absolute inset-0 animate-shimmer bg-linear-to-r from-transparent via-white/20 to-transparent"></div>
+                <div className="animate-shimmer absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent"></div>
               </div>
             </div>
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">

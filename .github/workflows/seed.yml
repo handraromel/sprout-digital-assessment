@@ -11,6 +11,7 @@ on:
         options:
           - all
           - account
+          - journal
       environment:
         description: "Target environment"
         required: true
@@ -100,8 +101,11 @@ jobs:
           script: |
             cd ~/sprout-digital-assessment
 
-            # Check account count in database
-            docker compose --env-file .env.prod exec -T db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SELECT COUNT(*) as total_accounts FROM accounts;"
+            # Verify seeded data
+            docker compose --env-file .env.prod exec -T db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} << EOF
+            $([ '${{ github.event.inputs.module }}' != 'journal' ] && echo "SELECT COUNT(*) as total_accounts FROM accounts;")
+            $([ '${{ github.event.inputs.module }}' != 'account' ] && echo "SELECT COUNT(*) as total_journals FROM journals;")
+            EOF
 
             echo "✅ Verification completed"
         env:

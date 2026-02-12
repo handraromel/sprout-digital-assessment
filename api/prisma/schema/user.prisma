@@ -12,7 +12,8 @@ model User {
   lastLogin DateTime? @map("last_login") @db.Timestamp(0)
 
   // Relations
-  createdAccounts Account[] @relation("AccountCreatedBy")
+  createdAccounts      Account[]      @relation("AccountCreatedBy")
+  createdJournalEntries JournalEntry[] @relation("JournalEntryCreatedBy")
 
   @@index([email])
   @@index([username])

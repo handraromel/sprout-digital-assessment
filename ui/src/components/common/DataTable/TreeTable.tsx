@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
   LockClosedIcon,
   MagnifyingGlassIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
@@ -173,7 +174,7 @@ export const TreeTable = <TData,>({
     return (
       <td
         key={column.id}
-        className={`pl-4 pr-16 py-3 text-sm whitespace-nowrap ${
+        className={`py-3 pr-16 pl-4 text-sm whitespace-nowrap ${
           column.align === "center"
             ? "text-center"
             : column.align === "right"
@@ -234,7 +235,7 @@ export const TreeTable = <TData,>({
             variant="primary"
             onClick={onAdd}
             className={addButtonClassName}
-            icon={<span className="text-lg font-bold">+</span>}
+            icon={<PlusIcon className="h-5 w-5" />}
           >
             {addButtonLabel}
           </Button>

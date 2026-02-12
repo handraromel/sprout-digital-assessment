@@ -30,6 +30,9 @@ model Account {
   createdById String? @map("created_by_id")
   createdBy   User?   @relation("AccountCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
+  // Journal entry lines relation
+  journalLines JournalEntryLine[] @relation("JournalLineAccount")
+
   @@index([code])
   @@index([parentId])
   @@index([type])

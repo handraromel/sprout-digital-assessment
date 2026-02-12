@@ -1,0 +1,59 @@
+// Journal Entry Model Schema (Jurnal Umum)
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  REVERSED
+}
+
+model JournalEntry {
+  id               String        @id @default(uuid())
+  entryNumber      String        @unique @map("entry_number") @db.VarChar(20)
+  date             DateTime      @db.Date
+  description      String        @db.VarChar(500)
+  invoiceReference String?       @map("invoice_reference") @db.VarChar(50)
+  status           JournalStatus @default(DRAFT)
+  totalDebit       Decimal       @default(0) @map("total_debit") @db.Decimal(18, 2)
+  totalCredit      Decimal       @default(0) @map("total_credit") @db.Decimal(18, 2)
+  reversalReason   String?       @map("reversal_reason") @db.VarChar(500)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Self-referencing relation for reversal tracking
+  reversedFromId String?       @unique @map("reversed_from_id")
+  reversedFrom   JournalEntry? @relation("JournalReversal", fields: [reversedFromId], references: [id], onDelete: SetNull)
+  reversedBy     JournalEntry? @relation("JournalReversal")
+
+  // Created by user relation
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("JournalEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  // Journal entry lines
+  lines JournalEntryLine[]
+
+  @@index([entryNumber])
+  @@index([date])
+  @@index([status])
+  @@index([createdById])
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id        String   @id @default(uuid())
+  debit     Decimal  @default(0) @db.Decimal(18, 2)
+  credit    Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Journal entry relation
+  journalEntryId String       @map("journal_entry_id")
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  // Account relation
+  accountId String  @map("account_id")
+  account   Account @relation("JournalLineAccount", fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([journalEntryId])
+  @@index([accountId])
+  @@map("journal_entry_lines")
+}

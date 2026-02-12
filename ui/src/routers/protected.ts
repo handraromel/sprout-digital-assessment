@@ -1,19 +1,9 @@
-import { lazy } from "react";
-
-const DashboardPage = lazy(() => import("@/pages/Dashboard"));
-const AccountsPage = lazy(() => import("@/pages/accounts"));
+import { accountRoutes } from "./protected/account";
+import { journalRoutes } from "./protected/journals";
+import { mainRoutes } from "./protected/main";
 
 export const protectedRoutes = [
-  {
-    path: "/",
-    element: DashboardPage,
-  },
-  {
-    path: "/dashboard",
-    element: DashboardPage,
-  },
-  {
-    path: "/accounts",
-    element: AccountsPage,
-  },
+  ...mainRoutes,
+  ...accountRoutes,
+  ...journalRoutes,
 ];

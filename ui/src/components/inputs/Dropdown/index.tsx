@@ -152,7 +152,7 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
             <Portal>
               <ListboxOptions
                 anchor="bottom start"
-                className="bg-background-elevated border-border z-100 mt-1 max-h-100 h-100 w-(--button-width) overflow-auto rounded-lg border py-1 shadow-lg focus:outline-none [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300"
+                className="bg-background-elevated border-border z-100 mt-1 h-100 max-h-100 w-(--button-width) overflow-auto rounded-lg border py-1 shadow-lg focus:outline-none [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent"
               >
                 {options.map((option) => (
                   <ListboxOption
@@ -160,12 +160,12 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
                     value={String(option.value)}
                     disabled={option.disabled}
                     className={({ active, selected, disabled }) =>
-                      `relative select-none py-2 pr-9  ${
+                      `relative py-2 pr-9 select-none ${
                         disabled
                           ? "cursor-not-allowed text-gray-400"
                           : active
-                            ? "cursor-pointer bg-background-surface text-foreground"
-                            : "cursor-pointer text-foreground"
+                            ? "bg-background-surface text-foreground cursor-pointer"
+                            : "text-foreground cursor-pointer"
                       } ${selected && !disabled ? "font-medium" : ""}`
                     }
                     style={{

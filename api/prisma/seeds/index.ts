@@ -10,13 +10,15 @@
 
 import "dotenv/config";
 import { seedAccounts } from "./account.seeder";
+import { seedJournals } from "./journal.seeder";
 import { seedUsers } from "./user.seeder";
 
-type SeedModule = "user" | "account" | "all";
+type SeedModule = "user" | "account" | "journal" | "all";
 
 const seeders: Record<Exclude<SeedModule, "all">, () => Promise<void>> = {
   user: seedUsers,
   account: seedAccounts,
+  journal: seedJournals,
 };
 
 async function main(): Promise<void> {

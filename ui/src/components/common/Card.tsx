@@ -61,7 +61,7 @@ export interface CardHeaderProps {
 
 export const CardHeader = ({ children, className = "" }: CardHeaderProps) => {
   return (
-    <div className={`mb-4 border-b border-border pb-4 ${className}`}>
+    <div className={`border-border mb-4 border-b pb-4 ${className}`}>
       {children}
     </div>
   );
@@ -77,7 +77,7 @@ export interface CardTitleProps {
 
 export const CardTitle = ({ children, className = "" }: CardTitleProps) => {
   return (
-    <h3 className={`text-lg font-semibold text-foreground ${className}`}>
+    <h3 className={`text-foreground text-lg font-semibold ${className}`}>
       {children}
     </h3>
   );
@@ -96,7 +96,7 @@ export const CardDescription = ({
   className = "",
 }: CardDescriptionProps) => {
   return (
-    <p className={`mt-1 text-sm text-foreground-muted ${className}`}>
+    <p className={`text-foreground-muted mt-1 text-sm ${className}`}>
       {children}
     </p>
   );
@@ -124,7 +124,7 @@ export interface CardFooterProps {
 
 export const CardFooter = ({ children, className = "" }: CardFooterProps) => {
   return (
-    <div className={`mt-4 border-t border-border pt-4 ${className}`}>
+    <div className={`border-border mt-4 border-t pt-4 ${className}`}>
       {children}
     </div>
   );

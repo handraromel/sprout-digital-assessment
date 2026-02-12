@@ -1,6 +1,7 @@
 import { Router } from "express";
 import accountRoutes from "./account.routes";
 import authRoutes from "./auth.routes";
+import journalRoutes from "./journal.routes";
 import userRoutes from "./user.routes";
 
 const router = Router();
@@ -18,6 +19,9 @@ router.use("/auth", authRoutes);
 
 // User routes
 router.use("/users", userRoutes);
+
+// Journal routes (Jurnal Umum)
+router.use("/journals", journalRoutes);
 
 /**
  * Health check endpoint

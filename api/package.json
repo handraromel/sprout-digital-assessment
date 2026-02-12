@@ -9,7 +9,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "ts-node --require tsconfig-paths/register prisma/seeds/index.ts",
-    "db:seed:docker": "docker compose --profile dev exec -T api-dev npm run db:seed"
+    "db:seed:docker": "docker compose --profile dev exec -T api-dev npm run db:seed",
+    "db:regenerate:docker": "docker compose --profile dev exec -T api-dev npx prisma migrate deploy && docker compose --profile dev exec -T api-dev npm run db:generate"
   },
   "keywords": [],
   "author": "",

@@ -15,6 +15,7 @@ import {
   ChevronRightIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
+  MagnifyingGlassIcon,
   PlusIcon,
   ShieldExclamationIcon,
   XMarkIcon,
@@ -200,34 +201,33 @@ export function DataTable<TData>({
       {/* Header with Actions, Filters, and Search */}
       {(showSearch || headerActions || onAdd || filters?.length) && (
         <div className="mb-4 flex flex-col gap-4">
-          {/* Top row: Add button, Header actions */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Top row: Search input, Header actions and Add button */}
+          <div className="flex items-center justify-between gap-4">
+            {/* Search input */}
+            {showSearch && onGlobalFilterChange && (
+              <div className="w-full max-w-md">
+                <TextField
+                  placeholder={searchPlaceholder || "Search..."}
+                  value={globalFilter}
+                  onChange={(e) => onGlobalFilterChange(e.target.value)}
+                  icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                />
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
+              {headerActions}
               {onAdd && (
                 <Button
                   variant="primary"
                   onClick={onAdd}
-                  className="text-small h-8"
+                  className="text-small h-11"
                   icon={<PlusIcon className="h-5 w-5" />}
                 >
                   {addButtonLabel || "Add"}
                 </Button>
               )}
-              {headerActions}
             </div>
-
-            {/* Search input */}
-            {showSearch && onGlobalFilterChange && (
-              <div className="sm:ml-auto">
-                <TextField
-                  placeholder={searchPlaceholder || "Search..."}
-                  value={globalFilter}
-                  onChange={(e) => onGlobalFilterChange(e.target.value)}
-                  className="w-full sm:w-64"
-                  small
-                />
-              </div>
-            )}
           </div>
 
           {/* Filters row */}
