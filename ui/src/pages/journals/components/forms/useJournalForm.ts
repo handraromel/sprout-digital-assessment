@@ -43,8 +43,14 @@ export function useJournalForm({ mode }: UseJournalFormOptions) {
   const { data: accountTree, isLoading: isLoadingAccounts } =
     useAccountTreeQuery();
 
+  // Mutations with notifications
   const createMutation = useCreateJournalMutation();
   const updateMutation = useUpdateJournalMutation();
+
+  // Mutations without notifications (for use when posting)
+  const createMutationSilent = useCreateJournalMutation(true);
+  const updateMutationSilent = useUpdateJournalMutation(true);
+
   const postMutation = usePostJournalMutation();
 
   const isCreate = mode === "create";
@@ -52,11 +58,14 @@ export function useJournalForm({ mode }: UseJournalFormOptions) {
   const isSubmitting =
     createMutation.isPending ||
     updateMutation.isPending ||
+    createMutationSilent.isPending ||
+    updateMutationSilent.isPending ||
     postMutation.isPending;
 
   const form = useForm<CreateJournalFormData>({
     // @ts-expect-error yupResolver type compatibility with react-hook-form
     resolver: yupResolver(createJournalSchema),
+    mode: "onTouched",
     defaultValues: {
       date: new Date(),
       invoiceReference: "",
@@ -162,7 +171,9 @@ export function useJournalForm({ mode }: UseJournalFormOptions) {
             lines: formattedLines,
           };
 
-          const response = await createMutation.mutateAsync(createData);
+          // Use silent mutation when posting to suppress create notification
+          const mutation = shouldPost ? createMutationSilent : createMutation;
+          const response = await mutation.mutateAsync(createData);
 
           if (shouldPost && response.data?.id) {
             await postMutation.mutateAsync(response.data.id);
@@ -186,7 +197,9 @@ export function useJournalForm({ mode }: UseJournalFormOptions) {
             lines: formattedLines,
           };
 
-          await updateMutation.mutateAsync({ id: journalId, data: updateData });
+          // Use silent mutation when posting to suppress update notification
+          const mutation = shouldPost ? updateMutationSilent : updateMutation;
+          await mutation.mutateAsync({ id: journalId, data: updateData });
 
           if (shouldPost) {
             await postMutation.mutateAsync(journalId);
@@ -209,18 +222,31 @@ export function useJournalForm({ mode }: UseJournalFormOptions) {
       isCreate,
       journalId,
       createMutation,
+      createMutationSilent,
       updateMutation,
+      updateMutationSilent,
       postMutation,
       showSuccessModal,
     ],
   );
 
-  const handleSave = form.handleSubmit((data) =>
-    onSubmit(data as unknown as CreateJournalFormData, false),
-  );
-  const handleSaveAndPost = form.handleSubmit((data) =>
-    onSubmit(data as unknown as CreateJournalFormData, true),
-  );
+  const handleSave = async () => {
+    const isValid = await form.trigger();
+    if (isValid) {
+      form.handleSubmit((data) =>
+        onSubmit(data as unknown as CreateJournalFormData, false),
+      )();
+    }
+  };
+
+  const handleSaveAndPost = async () => {
+    const isValid = await form.trigger();
+    if (isValid) {
+      form.handleSubmit((data) =>
+        onSubmit(data as unknown as CreateJournalFormData, true),
+      )();
+    }
+  };
 
   const navigateBack = useCallback(() => {
     navigate("/journals");

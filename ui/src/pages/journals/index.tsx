@@ -155,7 +155,7 @@ export default function JournalsPage() {
   return (
     <div className="p-6">
       <h1 className="text-foreground mb-6 text-2xl font-bold">
-        {JOURNAL_MESSAGES.PAGE_TITLE}
+        {"Jurnal Umum"}
       </h1>
 
       <DataTable<JournalEntry>
@@ -164,12 +164,12 @@ export default function JournalsPage() {
         isLoading={isLoading}
         globalFilter={globalFilter}
         onGlobalFilterChange={handleSearchChange}
-        emptyMessage={JOURNAL_MESSAGES.EMPTY}
+        emptyMessage={"Tidak ada data"}
         searchPlaceholder="Cari jurnal..."
         showSearch
         showPagination
         onAdd={navigateToCreate}
-        addButtonLabel={JOURNAL_MESSAGES.ADD_NEW}
+        addButtonLabel={"Tambah Jurnal"}
         actionsConfig={{
           header: "Aksi",
           align: "center",

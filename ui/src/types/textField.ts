@@ -32,4 +32,5 @@ export interface TextFieldProps<
   currency?: CurrencyConfig;
   control?: Control<TFieldValues>;
   name?: Path<TFieldValues>;
+  hideErrorMessage?: boolean;
 }

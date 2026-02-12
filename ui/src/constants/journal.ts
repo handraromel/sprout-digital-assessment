@@ -16,9 +16,6 @@ export const JOURNAL_CONFIG = {
 };
 
 export const JOURNAL_MESSAGES = {
-  PAGE_TITLE: "Jurnal Umum",
-  EMPTY: "Tidak ada data jurnal",
-  ADD_NEW: "Tambah Jurnal Baru",
   CREATE_SUCCESS: "Berhasil Tambah Jurnal Baru",
   CREATE_SUCCESS_DESC: "Jurnal baru berhasil ditambahkan!",
   UPDATE_SUCCESS: "Berhasil Update Jurnal",

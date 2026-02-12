@@ -1,9 +1,8 @@
 import { Breadcrumb, Button, ConfirmModal } from "@/components/common";
 import { DatePicker, Dropdown, TextField } from "@/components/inputs";
-import { INVOICE_OPTIONS, JOURNAL_MESSAGES } from "@/constants/journal";
+import { INVOICE_OPTIONS } from "@/constants/journal";
 import { formatCurrency } from "@/utils";
 import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Controller } from "react-hook-form";
 import { BREADCRUMB_ITEMS } from "../../constants";
 import { useJournalForm } from "./useJournalForm";
 
@@ -60,10 +59,10 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
             onClick={navigateBack}
             className="rounded-lg p-2 hover:bg-gray-100"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+            <ArrowLeftIcon className="h-5 w-5 cursor-pointer text-gray-600" />
           </button>
           <h1 className="text-foreground text-2xl font-bold">
-            {isCreate ? JOURNAL_MESSAGES.ADD_NEW : "Edit Jurnal"}
+            {isCreate ? "Tambah Jurnal" : "Edit Jurnal"}
           </h1>
         </div>
         <div className="ml-14">
@@ -85,19 +84,13 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
 
           {/* Invoice Number Dropdown - Full Width */}
           <div className="mt-4">
-            <Controller
+            <Dropdown
+              label="Pilih Invoice"
+              options={INVOICE_OPTIONS}
               control={control}
               name="invoiceReference"
-              render={({ field }) => (
-                <Dropdown
-                  label="Pilih Invoice"
-                  options={INVOICE_OPTIONS}
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                  placeholder="Pilih Invoice"
-                  error={errors.invoiceReference}
-                />
-              )}
+              placeholder="Pilih Invoice"
+              error={errors.invoiceReference}
             />
           </div>
 
@@ -119,12 +112,8 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
               </p>
             )}
           </div>
-        </div>
-
-        {/* Journal Lines Section */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
           {/* Table Header */}
-          <div className="mb-2 grid grid-cols-12 gap-4">
+          <div className="my-3 grid grid-cols-12 gap-4">
             <div className="col-span-5 text-sm font-medium text-gray-600">
               Akun
             </div>
@@ -140,67 +129,58 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
           {/* Journal Lines */}
           <div className="space-y-3">
             {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="grid grid-cols-12 items-center gap-4"
-              >
-                {/* Account Dropdown */}
-                <div className="col-span-5">
-                  <Controller
-                    control={control}
-                    name={`lines.${index}.accountId`}
-                    render={({ field: accountField }) => (
-                      <Dropdown
-                        options={accountOptions}
-                        value={accountField.value}
-                        onChange={accountField.onChange}
-                        placeholder="Pilih Akun"
-                        hierarchical
-                        small
-                        error={errors.lines?.[index]?.accountId}
-                      />
-                    )}
-                  />
-                </div>
+              <div key={field.id} className="space-y-1">
+                <div className="grid grid-cols-12 items-center gap-4">
+                  {/* Account Dropdown */}
+                  <div className="col-span-5">
+                    <Dropdown
+                      options={accountOptions}
+                      control={control}
+                      name={`lines.${index}.accountId`}
+                      placeholder="Pilih Akun"
+                      hierarchical
+                      small
+                      hideErrorMessage
+                    />
+                  </div>
 
-                {/* Debit Field */}
-                <div className="col-span-3">
-                  <TextField
-                    control={control}
-                    name={`lines.${index}.debit`}
-                    placeholder="0"
-                    currency={{ symbol: "Rp", position: "prefix" }}
-                    small
-                    error={errors.lines?.[index]?.debit}
-                  />
-                </div>
+                  {/* Debit Field */}
+                  <div className="col-span-3">
+                    <TextField
+                      control={control}
+                      name={`lines.${index}.debit`}
+                      placeholder="0"
+                      currency={{ symbol: "Rp", position: "prefix" }}
+                      small
+                    />
+                  </div>
 
-                {/* Credit Field */}
-                <div className="col-span-3">
-                  <TextField
-                    control={control}
-                    name={`lines.${index}.credit`}
-                    placeholder="0"
-                    currency={{ symbol: "Rp", position: "prefix" }}
-                    small
-                    error={errors.lines?.[index]?.credit}
-                  />
-                </div>
+                  {/* Credit Field */}
+                  <div className="col-span-3">
+                    <TextField
+                      control={control}
+                      name={`lines.${index}.credit`}
+                      placeholder="0"
+                      currency={{ symbol: "Rp", position: "prefix" }}
+                      small
+                    />
+                  </div>
 
-                {/* Remove Button */}
-                <div className="col-span-1 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => removeLine(index)}
-                    disabled={fields.length <= 1}
-                    className={`rounded p-1.5 transition-colors ${
-                      fields.length <= 1
-                        ? "cursor-not-allowed text-gray-300"
-                        : "text-red-500 hover:bg-red-50"
-                    }`}
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
+                  {/* Remove Button */}
+                  <div className="col-span-1 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => removeLine(index)}
+                      disabled={fields.length <= 1}
+                      className={`rounded p-1.5 transition-colors ${
+                        fields.length <= 1
+                          ? "cursor-not-allowed text-gray-300"
+                          : "text-red-500 hover:bg-red-50"
+                      }`}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -242,12 +222,26 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Line-level error */}
-        {errors.lines?.message && (
-          <p className="text-error text-sm">{errors.lines.message}</p>
-        )}
+          {/* Validation Errors Section */}
+          {(errors.lines?.message ||
+            errors.lines?.root?.message ||
+            Object.keys(errors).length > 0) && (
+            <div className="mt-4 rounded-lg bg-red-50 p-4">
+              <p className="text-sm font-medium text-red-800">
+                Mohon perbaiki kesalahan berikut:
+              </p>
+              <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-red-700">
+                {errors.date && <li>{errors.date.message}</li>}
+                {errors.description && <li>{errors.description.message}</li>}
+                {errors.lines?.message && <li>{errors.lines.message}</li>}
+                {errors.lines?.root?.message && (
+                  <li>{errors.lines.root.message}</li>
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-4">
@@ -256,6 +250,7 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
             variant="secondary"
             onClick={handleSave}
             isLoading={isSubmitting}
+            disabled={isSubmitting}
             className="min-w-32 border border-gray-300"
           >
             Simpan Draft
@@ -265,7 +260,7 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
             variant="success"
             onClick={handleSaveAndPost}
             isLoading={isSubmitting}
-            disabled={!totals.isBalanced}
+            disabled={isSubmitting}
             className="min-w-32"
           >
             Tambah Jurnal

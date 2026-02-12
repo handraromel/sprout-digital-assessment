@@ -10,7 +10,7 @@ import { handleMutationError } from "@/utils/errorHandler";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { JOURNAL_QUERY_KEYS } from "../queries/useJournalQuery";
 
-export const useCreateJournalMutation = () => {
+export const useCreateJournalMutation = (suppressNotification = false) => {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotificationStore();
 
@@ -19,7 +19,9 @@ export const useCreateJournalMutation = () => {
       journalService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: JOURNAL_QUERY_KEYS.all });
-      showSuccess(JOURNAL_MESSAGES.CREATE_SUCCESS);
+      if (!suppressNotification) {
+        showSuccess(JOURNAL_MESSAGES.CREATE_SUCCESS);
+      }
     },
     onError: (error: unknown) => {
       handleMutationError(error, showError, JOURNAL_MESSAGES.CREATE_ERROR);
@@ -27,7 +29,7 @@ export const useCreateJournalMutation = () => {
   });
 };
 
-export const useUpdateJournalMutation = () => {
+export const useUpdateJournalMutation = (suppressNotification = false) => {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotificationStore();
 
@@ -41,7 +43,9 @@ export const useUpdateJournalMutation = () => {
     }) => journalService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: JOURNAL_QUERY_KEYS.all });
-      showSuccess(JOURNAL_MESSAGES.UPDATE_SUCCESS);
+      if (!suppressNotification) {
+        showSuccess(JOURNAL_MESSAGES.UPDATE_SUCCESS);
+      }
     },
     onError: (error: unknown) => {
       handleMutationError(error, showError, JOURNAL_MESSAGES.UPDATE_ERROR);

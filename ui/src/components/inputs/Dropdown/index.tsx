@@ -54,6 +54,7 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
   value: valueProp,
   onChange: onChangeProp,
   hierarchical = false,
+  hideErrorMessage = false,
   controllerProps,
   ...props
 }: Omit<DropdownProps<TFieldValues>, "control" | "name"> & {
@@ -192,7 +193,9 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
             </Portal>
           </div>
         </Listbox>
-        {error && <p className="text-error mt-1 text-sm">{error.message}</p>}
+        {!hideErrorMessage && error && (
+          <p className="text-error mt-1 text-sm">{error.message}</p>
+        )}
         {helperText && !error && (
           <p className="text-foreground-muted mt-1 text-sm">{helperText}</p>
         )}
@@ -250,7 +253,9 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
           </option>
         ))}
       </select>
-      {error && <p className="text-error mt-1 text-sm">{error.message}</p>}
+      {!hideErrorMessage && error && (
+        <p className="text-error mt-1 text-sm">{error.message}</p>
+      )}
       {helperText && !error && (
         <p className="text-foreground-muted mt-1 text-sm">{helperText}</p>
       )}

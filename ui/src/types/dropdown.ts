@@ -33,4 +33,5 @@ export interface DropdownProps<
   hierarchical?: boolean;
   control?: Control<TFieldValues>;
   name?: Path<TFieldValues>;
+  hideErrorMessage?: boolean;
 }

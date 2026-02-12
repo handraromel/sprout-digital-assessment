@@ -1,7 +1,6 @@
 import { useUserStore } from "@/stores";
 import {
   ArrowLeftStartOnRectangleIcon,
-  Cog8ToothIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
@@ -61,13 +60,6 @@ export const ProfileDropdown = () => {
           icon={<UserIcon className="h-5 w-5" />}
         >
           Profile
-        </Button>
-        <Button
-          variant="secondary"
-          className="w-full rounded-none border-0 bg-transparent py-2 pl-2.5 text-left text-sm focus:ring-0"
-          icon={<Cog8ToothIcon className="h-5 w-5" />}
-        >
-          Settings
         </Button>
         <hr className="border-border" />
         <Button

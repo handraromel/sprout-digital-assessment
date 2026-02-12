@@ -38,6 +38,32 @@ export const createJournalSchema = yup.object({
     .of(journalLineSchema)
     .min(JOURNAL_CONFIG.LINES.MINIMUM, "Minimal 2 baris jurnal diperlukan")
     .test(
+      "line-has-amount",
+      "Setiap baris harus memiliki nilai debit atau kredit",
+      (lines) => {
+        if (!lines) return false;
+        return lines.every(
+          (line) => (line.debit || 0) > 0 || (line.credit || 0) > 0,
+        );
+      },
+    )
+    .test(
+      "has-positive-totals",
+      "Total debit dan kredit harus lebih dari 0",
+      (lines) => {
+        if (!lines) return false;
+        const totalDebit = lines.reduce(
+          (sum, line) => sum + (line.debit || 0),
+          0,
+        );
+        const totalCredit = lines.reduce(
+          (sum, line) => sum + (line.credit || 0),
+          0,
+        );
+        return totalDebit > 0 || totalCredit > 0;
+      },
+    )
+    .test(
       "debit-credit-balance",
       "Total debit harus sama dengan total kredit",
       (lines) => {
@@ -50,17 +76,7 @@ export const createJournalSchema = yup.object({
           (sum, line) => sum + (line.credit || 0),
           0,
         );
-        return totalDebit === totalCredit && totalDebit > 0;
-      },
-    )
-    .test(
-      "line-has-amount",
-      "Setiap baris harus memiliki nilai debit atau kredit",
-      (lines) => {
-        if (!lines) return false;
-        return lines.every(
-          (line) => (line.debit || 0) > 0 || (line.credit || 0) > 0,
-        );
+        return totalDebit === totalCredit;
       },
     )
     .required(),

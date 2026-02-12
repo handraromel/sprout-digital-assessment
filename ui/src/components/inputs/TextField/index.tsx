@@ -52,6 +52,7 @@ function TextFieldInner<TFieldValues extends FieldValues = FieldValues>({
   value: externalValue,
   onChange: onChangeProps,
   type,
+  hideErrorMessage = false,
   controllerProps,
   ...props
 }: Omit<TextFieldProps<TFieldValues>, "control" | "name"> & {
@@ -217,7 +218,9 @@ function TextFieldInner<TFieldValues extends FieldValues = FieldValues>({
           </button>
         )}
       </div>
-      {error && <p className="text-error mt-1 text-sm">{error.message}</p>}
+      {!hideErrorMessage && error && (
+        <p className="text-error mt-1 text-sm">{error.message}</p>
+      )}
       {helperText && !error && (
         <p className="text-foreground-muted mt-1 text-sm">{helperText}</p>
       )}
