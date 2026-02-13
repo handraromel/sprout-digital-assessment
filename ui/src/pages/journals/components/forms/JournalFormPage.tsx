@@ -37,7 +37,7 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="space-y-6">
         <div className="animate-pulse">
           <div className="mb-6 h-8 w-48 rounded bg-gray-200" />
           <div className="space-y-4">
@@ -50,14 +50,14 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="mb-6">
-        <div className="mb-2 flex items-center gap-4">
+        <div className="mb-2 flex items-start gap-4">
           <button
             type="button"
             onClick={navigateBack}
-            className="rounded-lg p-2 hover:bg-gray-100"
+            className="mt-2 rounded-lg hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5 cursor-pointer text-gray-600" />
           </button>
@@ -65,7 +65,7 @@ export default function JournalFormPage({ mode }: JournalFormPageProps) {
             {isCreate ? "Tambah Jurnal" : "Edit Jurnal"}
           </h1>
         </div>
-        <div className="ml-14">
+        <div className="ml-9">
           <Breadcrumb items={breadcrumbItems} />
         </div>
       </div>

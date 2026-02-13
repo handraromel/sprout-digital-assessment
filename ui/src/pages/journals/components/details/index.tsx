@@ -102,7 +102,7 @@ export default function JournalDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="space-y-6">
         <div className="animate-pulse">
           <div className="mb-6 h-8 w-48 rounded bg-gray-200" />
           <div className="space-y-4">
@@ -116,7 +116,7 @@ export default function JournalDetailPage() {
 
   if (!journal) {
     return (
-      <div className="p-6">
+      <div className="space-y-6">
         <div className="py-12 text-center">
           <p className="text-gray-500">Jurnal tidak ditemukan</p>
           <Button variant="primary" onClick={navigateBack} className="mt-4">
@@ -131,25 +131,22 @@ export default function JournalDetailPage() {
   const canReverse = journal.status === "POSTED";
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <button
               type="button"
               onClick={navigateBack}
-              className="rounded-lg p-2 hover:bg-gray-100"
+              className="mt-2 rounded-lg hover:bg-gray-100"
             >
-              <ArrowLeftIcon className="h-5 w-5 text-gray-600" />
+              <ArrowLeftIcon className="h-5 w-5 cursor-pointer text-gray-600" />
             </button>
             <div>
               <h1 className="text-foreground text-2xl font-bold">
                 Detail Jurnal
               </h1>
-              <p className="text-foreground-muted text-sm">
-                {journal.entryNumber}
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -176,7 +173,7 @@ export default function JournalDetailPage() {
             )}
           </div>
         </div>
-        <div className="mt-2 ml-14">
+        <div className="mt-2 ml-9">
           <Breadcrumb items={BREADCRUMB_ITEMS.DETAIL} />
         </div>
       </div>
@@ -191,7 +188,7 @@ export default function JournalDetailPage() {
           <div>
             <p className="text-sm text-gray-500">No. Referensi</p>
             <p className="font-mono font-medium">
-              {journal.invoiceReference || "-"}
+              {journal.entryNumber || "-"}
             </p>
           </div>
           <div>
