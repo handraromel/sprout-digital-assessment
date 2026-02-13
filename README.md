@@ -1,6 +1,6 @@
 # Sprout Digital Assessment
 
-A modern full-stack application for managing accounts, journals, and invoices. Built with a clean architecture and a focus on user experience.
+A full-stack application for Sprout Digital Assessment.
 
 ## 🚀 Live Demo
 
