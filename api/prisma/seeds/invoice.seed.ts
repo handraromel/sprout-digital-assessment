@@ -20,8 +20,8 @@ export const invoiceSeedData: InvoiceSeed[] = [
   {
     invoiceNumber: "INV-2025-08-009",
     customerName: "PT. Abadi Nan Jaya",
-    date: new Date("2025-09-28"),
-    dueDate: new Date("2025-10-28"),
+    date: new Date("2026-02-02"),
+    dueDate: new Date("2026-02-13"),
     totalAmount: 500000,
     remainingBalance: 500000,
     status: "UNPAID",
@@ -29,8 +29,8 @@ export const invoiceSeedData: InvoiceSeed[] = [
   {
     invoiceNumber: "INV-2025-08-008",
     customerName: "CV. Indah Sentosa",
-    date: new Date("2025-10-03"),
-    dueDate: new Date("2025-10-28"),
+    date: new Date("2026-02-01"),
+    dueDate: new Date("2026-02-13"),
     totalAmount: 2500000,
     remainingBalance: 2500000,
     status: "UNPAID",
