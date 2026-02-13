@@ -1,7 +1,7 @@
-import { useAccountTreeQuery } from "@/hooks/queries";
+import { useAccountTreeInfiniteQuery } from "@/hooks/queries";
 import { useModalStore } from "@/stores";
 import type { Account, AccountTreeNode } from "@/types";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MODAL_ID } from "./constants";
 
 export function useAccountsPage() {
@@ -15,7 +15,47 @@ export function useAccountsPage() {
 
   const { isOpen, open, close } = useModalStore();
 
-  const { data: accountTree, isLoading, refetch } = useAccountTreeQuery();
+  // Use infinite query with 5 parents per page
+  const {
+    data: infiniteData,
+    isLoading,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useAccountTreeInfiniteQuery({ limit: 5 });
+
+  // Flatten all pages into a single tree
+  const accountTree = useMemo(() => {
+    if (!infiniteData?.pages) return [];
+    return infiniteData.pages.flatMap((page) => page.data);
+  }, [infiniteData]);
+
+  // Intersection observer ref for infinite scroll trigger
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Set up intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
@@ -150,5 +190,9 @@ export function useAccountsPage() {
     closeSuccessModal,
     selectedAccount,
     refetch,
+    // Infinite scroll props
+    loadMoreRef,
+    hasNextPage: hasNextPage || false,
+    isFetchingNextPage,
   };
 }

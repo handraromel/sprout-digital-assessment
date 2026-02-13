@@ -153,7 +153,7 @@ export default function JournalsPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       <h1 className="text-foreground mb-6 text-2xl font-bold">
         {"Jurnal Umum"}
       </h1>

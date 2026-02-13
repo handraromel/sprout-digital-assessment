@@ -34,4 +34,5 @@ export interface DropdownProps<
   control?: Control<TFieldValues>;
   name?: Path<TFieldValues>;
   hideErrorMessage?: boolean;
+  emptyMessage?: string;
 }

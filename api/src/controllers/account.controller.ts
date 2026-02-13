@@ -165,6 +165,35 @@ export class AccountController {
   }
 
   /**
+   * Get paginated accounts tree (for infinite scroll)
+   */
+  static async getAccountTreePaginated(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const { type, limit, cursor } = req.query;
+
+      const result = await AccountService.getAccountTreePaginated({
+        type: type as string | undefined,
+        limit: limit ? parseInt(limit as string) : 5,
+        cursor: cursor as string | undefined,
+      });
+
+      res.json({
+        message: ACCOUNT_MESSAGES.RETRIEVE_TREE_SUCCESS,
+        data: result.data,
+        nextCursor: result.nextCursor,
+        hasNextPage: result.hasNextPage,
+      });
+    } catch (error) {
+      res.status(HTTP_STATUS.INTERNAL_ERROR).json({
+        error: ACCOUNT_MESSAGES.RETRIEVE_TREE_FAILED,
+      });
+    }
+  }
+
+  /**
    * Update account
    */
   static async updateAccount(req: Request, res: Response): Promise<void> {

@@ -33,6 +33,10 @@ model Account {
   // Journal entry lines relation
   journalLines JournalEntryLine[] @relation("JournalLineAccount")
 
+  // Payment relations
+  depositPayments  Payment[] @relation("PaymentDepositAccount")
+  discountPayments Payment[] @relation("PaymentDiscountAccount")
+
   @@index([code])
   @@index([parentId])
   @@index([type])

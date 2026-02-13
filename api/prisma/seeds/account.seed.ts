@@ -1,8 +1,3 @@
-/**
- * Account Seed Data
- * Indonesian Standard Chart of Accounts (Daftar Akun)
- */
-
 import { AccountType } from "../../generated/prisma/client";
 
 interface AccountSeed {
@@ -16,9 +11,6 @@ interface AccountSeed {
 }
 
 export const accountSeedData: AccountSeed[] = [
-  // ============================================
-  // ASSETS (ASET) - 1xx.xxx
-  // ============================================
   {
     code: "100.000",
     name: "ASET",
@@ -26,8 +18,6 @@ export const accountSeedData: AccountSeed[] = [
     isSystem: true,
     isControl: true,
   },
-
-  // Current Assets (Aset Lancar)
   {
     code: "110.000",
     name: "ASET LANCAR",
@@ -148,8 +138,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "115.000",
     balance: 4000000,
   },
-
-  // Fixed Assets (Aset Tetap)
   {
     code: "120.000",
     name: "ASET TETAP",
@@ -199,10 +187,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "120.000",
     balance: -50000000,
   },
-
-  // ============================================
-  // LIABILITIES (KEWAJIBAN) - 2xx.xxx
-  // ============================================
   {
     code: "200.000",
     name: "KEWAJIBAN",
@@ -211,7 +195,6 @@ export const accountSeedData: AccountSeed[] = [
     isControl: true,
   },
 
-  // Current Liabilities (Kewajiban Lancar)
   {
     code: "210.000",
     name: "KEWAJIBAN LANCAR",
@@ -275,8 +258,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "210.000",
     balance: 20000000,
   },
-
-  // Long-term Liabilities (Kewajiban Jangka Panjang)
   {
     code: "220.000",
     name: "KEWAJIBAN JANGKA PANJANG",
@@ -291,10 +272,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "220.000",
     balance: 100000000,
   },
-
-  // ============================================
-  // EQUITY (EKUITAS) - 3xx.xxx
-  // ============================================
   {
     code: "300.000",
     name: "EKUITAS",
@@ -323,10 +300,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "300.000",
     balance: 0,
   },
-
-  // ============================================
-  // REVENUE (PENDAPATAN) - 4xx.xxx
-  // ============================================
   {
     code: "400.000",
     name: "PENDAPATAN",
@@ -374,10 +347,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "420.000",
     balance: 500000,
   },
-
-  // ============================================
-  // EXPENSES (BEBAN) - 5xx.xxx
-  // ============================================
   {
     code: "500.000",
     name: "BEBAN",
@@ -385,8 +354,6 @@ export const accountSeedData: AccountSeed[] = [
     isSystem: true,
     isControl: true,
   },
-
-  // Cost of Goods Sold (Harga Pokok Penjualan)
   {
     code: "510.000",
     name: "Harga Pokok Penjualan",
@@ -408,8 +375,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "510.000",
     balance: 5000000,
   },
-
-  // Operating Expenses (Beban Operasional)
   {
     code: "520.000",
     name: "Beban Operasional",
@@ -466,8 +431,6 @@ export const accountSeedData: AccountSeed[] = [
     parentCode: "520.000",
     balance: 5000000,
   },
-
-  // Other Expenses (Beban Lain-lain)
   {
     code: "530.000",
     name: "Beban Lain-lain",
@@ -487,5 +450,57 @@ export const accountSeedData: AccountSeed[] = [
     type: "EXPENSE",
     parentCode: "530.000",
     balance: 500000,
+  },
+  {
+    code: "700.000",
+    name: "POTONGAN PENJUALAN",
+    type: "REVENUE",
+    isSystem: true,
+    isControl: true,
+  },
+
+  {
+    code: "800.000",
+    name: "Beban Tambahan (800k)",
+    type: "EXPENSE",
+    isSystem: true,
+    isControl: true,
+  },
+  {
+    code: "800.001",
+    name: "Beban Iklan 800k",
+    type: "EXPENSE",
+    parentCode: "800.000",
+    isSystem: true,
+    balance: 2000000,
+  },
+  {
+    code: "801.001",
+    name: "Beban Iklan 800k",
+    type: "EXPENSE",
+    parentCode: "800.001",
+    balance: 2000000,
+  },
+  {
+    code: "802.001",
+    name: "Beban Iklan 800k",
+    type: "EXPENSE",
+    parentCode: "800.001",
+    balance: 2000000,
+  },
+  {
+    code: "900.000",
+    name: "Pendapatan Tambahan (900k)",
+    type: "REVENUE",
+    isSystem: true,
+    isControl: true,
+  },
+  {
+    code: "900.001",
+    name: "Pendapatan Sampingan 900k",
+    type: "REVENUE",
+    parentCode: "900.000",
+    isSystem: true,
+    balance: 3000000,
   },
 ];

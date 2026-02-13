@@ -6,7 +6,7 @@ export interface ModalProps {
   title?: string;
   description?: string;
   children: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl" | "2xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl";
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
   toggleFullscreen?: boolean;

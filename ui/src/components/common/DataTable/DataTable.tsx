@@ -202,10 +202,10 @@ export function DataTable<TData>({
       {(showSearch || headerActions || onAdd || filters?.length) && (
         <div className="mb-4 flex flex-col gap-4">
           {/* Top row: Search input, Header actions and Add button */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             {/* Search input */}
             {showSearch && onGlobalFilterChange && (
-              <div className="w-full max-w-md">
+              <div className="w-full md:flex-1">
                 <TextField
                   placeholder={searchPlaceholder || "Search..."}
                   value={globalFilter}
@@ -215,7 +215,7 @@ export function DataTable<TData>({
               </div>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:shrink-0">
               {headerActions}
               {onAdd && (
                 <Button

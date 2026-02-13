@@ -5,6 +5,7 @@ export * from "./button";
 export * from "./datatable";
 export * from "./dropdown";
 export * from "./icon";
+export * from "./invoice";
 export * from "./journal";
 export * from "./layout";
 export * from "./loadingOverlay";

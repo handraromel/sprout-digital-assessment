@@ -12,6 +12,7 @@ on:
           - all
           - account
           - journal
+          - invoice
       environment:
         description: "Target environment"
         required: true
@@ -103,8 +104,9 @@ jobs:
 
             # Verify seeded data
             docker compose --env-file .env.prod exec -T db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} << EOF
-            $([ '${{ github.event.inputs.module }}' != 'journal' ] && echo "SELECT COUNT(*) as total_accounts FROM accounts;")
-            $([ '${{ github.event.inputs.module }}' != 'account' ] && echo "SELECT COUNT(*) as total_journals FROM journals;")
+            $([ '${{ github.event.inputs.module }}' != 'journal' ] && [ '${{ github.event.inputs.module }}' != 'invoice' ] && echo "SELECT COUNT(*) as total_accounts FROM accounts;")
+            $([ '${{ github.event.inputs.module }}' != 'account' ] && [ '${{ github.event.inputs.module }}' != 'invoice' ] && echo "SELECT COUNT(*) as total_journals FROM journal_entries;")
+            $([ '${{ github.event.inputs.module }}' != 'account' ] && [ '${{ github.event.inputs.module }}' != 'journal' ] && echo "SELECT COUNT(*) as total_invoices FROM invoices;")
             EOF
 
             echo "✅ Verification completed"

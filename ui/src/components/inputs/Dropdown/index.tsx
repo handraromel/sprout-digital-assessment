@@ -56,6 +56,7 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
   hierarchical = false,
   hideErrorMessage = false,
   controllerProps,
+  required = false,
   ...props
 }: Omit<DropdownProps<TFieldValues>, "control" | "name"> & {
   controllerProps?: ResolvedControllerProps;
@@ -121,6 +122,7 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
           <label
             className={`text-foreground mb-2 block font-medium ${sizeConfig.label}`}
           >
+            {required && <span className="mr-0.5 text-red-500">*</span>}
             {label}
           </label>
         )}
@@ -153,42 +155,48 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
             <Portal>
               <ListboxOptions
                 anchor="bottom start"
-                className="bg-background-elevated border-border z-100 mt-1 h-100 max-h-100 w-(--button-width) overflow-auto rounded-lg border py-1 shadow-lg focus:outline-none [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent"
+                className="bg-background-elevated border-border z-100 mt-1 max-h-60 w-(--button-width) overflow-auto rounded-lg border py-1 shadow-lg focus:outline-none [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent"
               >
-                {options.map((option) => (
-                  <ListboxOption
-                    key={String(option.value)}
-                    value={String(option.value)}
-                    disabled={option.disabled}
-                    className={({ active, selected, disabled }) =>
-                      `relative py-2 pr-9 select-none ${
-                        disabled
-                          ? "cursor-not-allowed text-gray-400"
-                          : active
-                            ? "bg-background-surface text-foreground cursor-pointer"
-                            : "text-foreground cursor-pointer"
-                      } ${selected && !disabled ? "font-medium" : ""}`
-                    }
-                    style={{
-                      paddingLeft: `${(option.level || 0) * 16 + 12}px`,
-                    }}
-                  >
-                    {({ selected, disabled }) => (
-                      <>
-                        <span
-                          className={`block truncate ${disabled ? "text-gray-400" : ""}`}
-                        >
-                          {option.label}
-                        </span>
-                        {selected && !disabled && (
-                          <span className="text-primary absolute inset-y-0 right-0 flex items-center pr-3">
-                            <CheckIcon className="h-5 w-5" />
+                {options.length === 0 ? (
+                  <div className="text-foreground-muted px-4 py-3 text-sm">
+                    {props.emptyMessage || "Tidak ada data"}
+                  </div>
+                ) : (
+                  options.map((option) => (
+                    <ListboxOption
+                      key={String(option.value)}
+                      value={String(option.value)}
+                      disabled={option.disabled}
+                      className={({ active, selected, disabled }) =>
+                        `relative py-2 pr-9 select-none ${
+                          disabled
+                            ? "cursor-not-allowed text-gray-400"
+                            : active
+                              ? "bg-background-surface text-foreground cursor-pointer"
+                              : "text-foreground cursor-pointer"
+                        } ${selected && !disabled ? "font-medium" : ""}`
+                      }
+                      style={{
+                        paddingLeft: `${(option.level || 0) * 16 + 12}px`,
+                      }}
+                    >
+                      {({ selected, disabled }) => (
+                        <>
+                          <span
+                            className={`block truncate ${disabled ? "text-gray-400" : ""}`}
+                          >
+                            {option.label}
                           </span>
-                        )}
-                      </>
-                    )}
-                  </ListboxOption>
-                ))}
+                          {selected && !disabled && (
+                            <span className="text-primary absolute inset-y-0 right-0 flex items-center pr-3">
+                              <CheckIcon className="h-5 w-5" />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </ListboxOption>
+                  ))
+                )}
               </ListboxOptions>
             </Portal>
           </div>
@@ -209,6 +217,7 @@ function DropdownInner<TFieldValues extends FieldValues = FieldValues>({
         <label
           className={`text-foreground mb-2 block font-medium ${sizeConfig.label}`}
         >
+          {required && <span className="mr-0.5 text-red-500">*</span>}
           {label}
         </label>
       )}

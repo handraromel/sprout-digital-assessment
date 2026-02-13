@@ -1,21 +1,32 @@
 import { ProfileDropdown } from "@/components";
+import { MENU_ITEMS } from "@/constants/menuItems";
 import { type HeaderProps } from "@/types/layout";
-import { Link } from "react-router";
+import { useMemo } from "react";
+import { Link, useLocation } from "react-router";
 
 export default function Header({
   onSidebarToggle,
   noUserProfile,
   noTitle,
 }: HeaderProps) {
+  const location = useLocation();
+
+  // Get the current page title based on the active route
+  const pageTitle = useMemo(() => {
+    const currentPath = location.pathname;
+    const menuItem = MENU_ITEMS.find((item) => item.href === currentPath);
+    return menuItem?.labelKey || "Dashboard";
+  }, [location.pathname]);
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background-elevated">
+    <header className="border-border bg-background-elevated sticky top-0 z-40 w-full border-b">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         {/* Left Section - Logo & Sidebar Toggle */}
         <div className="flex items-center gap-4">
           {/* Sidebar Toggle Button (Mobile Only) */}
           <button
             onClick={onSidebarToggle}
-            className="inline-flex items-center justify-center rounded-lg p-2 text-foreground-muted transition-colors hover:bg-[var(--background-surface)] md:hidden"
+            className="text-foreground-muted inline-flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-[var(--background-surface)] md:hidden"
             aria-label="Toggle sidebar"
           >
             <svg
@@ -35,7 +46,7 @@ export default function Header({
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <span className="hidden text-lg font-bold text-foreground sm:inline">
+            <span className="text-foreground hidden text-lg font-bold sm:inline">
               {"Sprout Digital Assessment"}
             </span>
           </Link>
@@ -43,8 +54,8 @@ export default function Header({
 
         {/* Center Section - Title */}
         {!noTitle && (
-          <h1 className="text-sm font-semibold text-foreground-muted md:text-base">
-            {"Dashboard"}
+          <h1 className="text-foreground-muted text-sm font-semibold md:text-base">
+            {pageTitle}
           </h1>
         )}
 

@@ -7,3 +7,5 @@ export * from "./DataTable";
 export * from "./Modal";
 export * from "./ProfileDropdown";
 export * from "./SuspenseLoader";
+export * from "./TreeTable";
+export * from "./UserDetailsModal";

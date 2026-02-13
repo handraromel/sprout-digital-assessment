@@ -15,10 +15,8 @@ if (process.env.NODE_ENV !== "production") {
         description: "API documentation for the Sprout Digital Assessment",
       },
       servers: [
-        {
-          url: "http://localhost:3000",
-          description: "Development server",
-        },
+        { url: "/", description: "Use current origin (relative)" },
+        { url: "http://localhost:3000", description: "Development server" },
         {
           url: "https://sprout-digital-assessment.handraromel.site",
           description: "Production server",

@@ -5,6 +5,7 @@
 export * from "./account";
 export * from "./api";
 export * from "./button";
+export * from "./invoice";
 export * from "./journal";
 export * from "./menuItems";
 export * from "./responseStatus";

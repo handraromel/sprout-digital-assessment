@@ -63,6 +63,19 @@ export interface AccountDeleteResponse {
   message: string;
 }
 
+export interface AccountTreePaginatedResponse {
+  message: string;
+  data: AccountTreeNode[];
+  nextCursor: string | null;
+  hasNextPage: boolean;
+}
+
+export interface AccountTreePaginatedParams {
+  type?: AccountType;
+  limit?: number;
+  cursor?: string;
+}
+
 export interface FlattenedAccountNode extends Account {
   hasChildren: boolean;
   isExpanded: boolean;

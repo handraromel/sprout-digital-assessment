@@ -19,8 +19,8 @@ export interface User {
   fullname: string;
   role: UserRole;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LoginSuccessResponse {

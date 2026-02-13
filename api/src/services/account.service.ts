@@ -170,6 +170,99 @@ export class AccountService {
   }
 
   /**
+   * Get paginated root accounts with their descendants for infinite scroll
+   */
+  static async getAccountTreePaginated(params: {
+    type?: string;
+    limit?: number;
+    cursor?: string;
+  }): Promise<{
+    data: AccountTreeNode[];
+    nextCursor: string | null;
+    hasNextPage: boolean;
+  }> {
+    const { type, limit = 5, cursor } = params;
+
+    // Get root accounts (level 0) with cursor-based pagination
+    const rootAccounts = await prisma.account.findMany({
+      where: {
+        parentId: null,
+        isActive: true,
+        ...(type && { type: type as Account["type"] }),
+        ...(cursor && {
+          code: { gt: cursor },
+        }),
+      },
+      orderBy: { code: "asc" },
+      take: limit + 1, // Fetch one extra to check if there's a next page
+    });
+
+    // Determine if there's a next page
+    const hasNextPage = rootAccounts.length > limit;
+    const paginatedRoots = hasNextPage
+      ? rootAccounts.slice(0, limit)
+      : rootAccounts;
+
+    // Get the next cursor (code of the last item)
+    const nextCursor = hasNextPage
+      ? (paginatedRoots[paginatedRoots.length - 1]?.code ?? null)
+      : null;
+
+    if (paginatedRoots.length === 0) {
+      return { data: [], nextCursor: null, hasNextPage: false };
+    }
+
+    // Fetch all descendants for these root accounts
+    const rootIds = paginatedRoots.map((r) => r.id);
+
+    // Get all accounts that are descendants of these roots
+    const allDescendants = await this.getDescendantsForRoots(rootIds, type);
+
+    // Combine roots with descendants
+    const allAccounts = [...paginatedRoots, ...allDescendants];
+
+    // Build tree structure
+    const tree = this.buildTree(allAccounts);
+
+    return {
+      data: tree,
+      nextCursor,
+      hasNextPage,
+    };
+  }
+
+  /**
+   * Get all descendants for given root account IDs
+   */
+  private static async getDescendantsForRoots(
+    rootIds: string[],
+    type?: string,
+  ): Promise<Account[]> {
+    // Recursive CTE would be ideal, but for simplicity we'll do iterative queries
+    const descendants: Account[] = [];
+    let currentParentIds = rootIds;
+
+    // Traverse up to 4 levels deep (reasonable for chart of accounts)
+    for (let level = 0; level < 4; level++) {
+      if (currentParentIds.length === 0) break;
+
+      const children = await prisma.account.findMany({
+        where: {
+          parentId: { in: currentParentIds },
+          isActive: true,
+          ...(type && { type: type as Account["type"] }),
+        },
+        orderBy: { code: "asc" },
+      });
+
+      descendants.push(...children);
+      currentParentIds = children.map((c) => c.id);
+    }
+
+    return descendants;
+  }
+
+  /**
    * Update account
    */
   static async updateAccount(

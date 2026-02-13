@@ -1,5 +1,6 @@
 import { type MenuItem } from "@/types";
 import {
+  BanknotesIcon,
   BookOpenIcon,
   HomeIcon,
   QueueListIcon,
@@ -20,5 +21,10 @@ export const MENU_ITEMS: MenuItem[] = [
     labelKey: "Jurnal Umum",
     href: "/journals",
     icon: BookOpenIcon,
+  },
+  {
+    labelKey: "Penagihan",
+    href: "/penagihan",
+    icon: BanknotesIcon,
   },
 ];

@@ -1,0 +1,91 @@
+// Invoice & Payment Model Schema (Penagihan / A/R Management)
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+}
+
+model Invoice {
+  id               String        @id @default(uuid())
+  invoiceNumber    String        @unique @map("invoice_number") @db.VarChar(30)
+  customerName     String        @map("customer_name") @db.VarChar(255)
+  date             DateTime      @db.Date
+  dueDate          DateTime      @map("due_date") @db.Date
+  totalAmount      Decimal       @map("total_amount") @db.Decimal(18, 2)
+  remainingBalance Decimal       @map("remaining_balance") @db.Decimal(18, 2)
+  status           InvoiceStatus @default(UNPAID)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Created by user relation
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  // Payment allocations
+  paymentAllocations PaymentAllocation[]
+
+  @@index([invoiceNumber])
+  @@index([customerName])
+  @@index([dueDate])
+  @@index([status])
+  @@index([createdById])
+  @@map("invoices")
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  paymentNumber   String   @unique @map("payment_number") @db.VarChar(30)
+  paymentDate     DateTime @map("payment_date") @db.Date
+  customerName    String   @map("customer_name") @db.VarChar(255)
+  totalAmount     Decimal  @map("total_amount") @db.Decimal(18, 2)
+  discountPercent Decimal? @map("discount_percent") @db.Decimal(5, 2)
+  discountAmount  Decimal? @map("discount_amount") @db.Decimal(18, 2)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Deposit to account (Bank Account)
+  depositAccountId String  @map("deposit_account_id")
+  depositAccount   Account @relation("PaymentDepositAccount", fields: [depositAccountId], references: [id], onDelete: Restrict)
+
+  // Discount account (optional)
+  discountAccountId String?  @map("discount_account_id")
+  discountAccount   Account? @relation("PaymentDiscountAccount", fields: [discountAccountId], references: [id], onDelete: SetNull)
+
+  // Journal entry created for this payment
+  journalEntryId String?       @unique @map("journal_entry_id")
+  journalEntry   JournalEntry? @relation("PaymentJournalEntry", fields: [journalEntryId], references: [id], onDelete: SetNull)
+
+  // Created by user relation
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  // Payment allocations
+  allocations PaymentAllocation[]
+
+  @@index([paymentNumber])
+  @@index([customerName])
+  @@index([paymentDate])
+  @@index([depositAccountId])
+  @@index([createdById])
+  @@map("payments")
+}
+
+model PaymentAllocation {
+  id              String   @id @default(uuid())
+  allocatedAmount Decimal  @map("allocated_amount") @db.Decimal(18, 2)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  // Payment relation
+  paymentId String  @map("payment_id")
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  // Invoice relation
+  invoiceId String  @map("invoice_id")
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId])
+  @@index([invoiceId])
+  @@map("payment_allocations")
+}

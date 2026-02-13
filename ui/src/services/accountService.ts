@@ -3,6 +3,8 @@ import type {
   AccountDeleteResponse,
   AccountListResponse,
   AccountResponse,
+  AccountTreePaginatedParams,
+  AccountTreePaginatedResponse,
   AccountTreeResponse,
   CreateAccountRequest,
   UpdateAccountRequest,
@@ -16,6 +18,22 @@ export const accountService = {
 
   getTree: async (): Promise<AccountTreeResponse> => {
     return httpGet<AccountTreeResponse>(API_ENDPOINTS.ACCOUNTS.TREE);
+  },
+
+  getTreePaginated: async (
+    params: AccountTreePaginatedParams = {},
+  ): Promise<AccountTreePaginatedResponse> => {
+    const searchParams = new URLSearchParams();
+    if (params.type) searchParams.set("type", params.type);
+    if (params.limit) searchParams.set("limit", params.limit.toString());
+    if (params.cursor) searchParams.set("cursor", params.cursor);
+
+    const queryString = searchParams.toString();
+    const url = queryString
+      ? `${API_ENDPOINTS.ACCOUNTS.TREE_PAGINATED}?${queryString}`
+      : API_ENDPOINTS.ACCOUNTS.TREE_PAGINATED;
+
+    return httpGet<AccountTreePaginatedResponse>(url);
   },
 
   getById: async (id: string): Promise<AccountResponse> => {

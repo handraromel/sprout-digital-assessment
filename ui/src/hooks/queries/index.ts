@@ -4,4 +4,5 @@
 
 export * from "./useAccountQuery";
 export * from "./useAuthQuery";
+export * from "./useInvoiceQuery";
 export * from "./useJournalQuery";

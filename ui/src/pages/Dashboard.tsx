@@ -3,46 +3,49 @@
  * Main dashboard for authenticated users
  */
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle,
-} from "@/components/common";
+import { Card, CardContent, CardTitle } from "@/components/common";
+import { MENU_ITEMS } from "@/constants/menuItems";
+import { Link } from "react-router";
 
 export default function DashboardPage() {
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="mt-2 text-foreground-muted">Welcome to dashboard</p>
+      <div className="mb-8">
+        <h1 className="text-foreground text-3xl font-bold">Dashboard</h1>
+        <p className="text-foreground-muted mt-2">
+          Quick access to your modules
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card hover>
-          <CardContent>
-            <CardTitle>Overview</CardTitle>
-            <CardDescription>
-              Your dashboard overview will appear here
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card hover>
-          <CardContent>
-            <CardTitle>Statistics</CardTitle>
-            <CardDescription>Your statistics will appear here</CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card hover>
-          <CardContent>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Your recent activity will appear here
-            </CardDescription>
-          </CardContent>
-        </Card>
+      {/* Quick Access Menu */}
+      <div className="mb-8">
+        <h2 className="text-foreground mb-4 text-xl font-semibold">
+          Quick Access
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {MENU_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} to={item.href}>
+                <Card
+                  hover
+                  className="h-full transition-shadow hover:shadow-md"
+                >
+                  <CardContent className="flex flex-wrap items-center justify-center gap-4 p-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                      <Icon className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-center text-lg font-semibold">
+                        {item.labelKey}
+                      </CardTitle>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

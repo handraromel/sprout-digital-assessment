@@ -9,6 +9,13 @@ import { Router } from "express";
 
 const router = Router();
 
+// GET /api/v1/accounts/tree/paginated - Get paginated accounts tree (protected)
+router.get(
+  "/tree/paginated",
+  authMiddleware,
+  AccountController.getAccountTreePaginated,
+);
+
 // GET /api/v1/accounts/tree - Get accounts as hierarchical tree (protected)
 router.get("/tree", authMiddleware, AccountController.getAccountTree);
 

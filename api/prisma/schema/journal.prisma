@@ -31,6 +31,9 @@ model JournalEntry {
   // Journal entry lines
   lines JournalEntryLine[]
 
+  // Payment relation (if this journal entry was created from a payment)
+  payment Payment? @relation("PaymentJournalEntry")
+
   @@index([entryNumber])
   @@index([date])
   @@index([status])

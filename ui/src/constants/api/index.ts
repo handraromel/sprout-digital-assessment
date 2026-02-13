@@ -1,5 +1,6 @@
 import { ACCOUNT_ENDPOINTS } from "./account";
 import { AUTH_ENDPOINTS } from "./auth";
+import { INVOICE_ENDPOINTS, PAYMENT_ENDPOINTS } from "./invoice";
 import { JOURNAL_ENDPOINTS } from "./journal";
 import { USER_ENDPOINTS } from "./user";
 
@@ -7,5 +8,7 @@ export const API_ENDPOINTS = {
   AUTH: AUTH_ENDPOINTS,
   USER: USER_ENDPOINTS,
   ACCOUNTS: ACCOUNT_ENDPOINTS,
+  INVOICES: INVOICE_ENDPOINTS,
   JOURNALS: JOURNAL_ENDPOINTS,
+  PAYMENTS: PAYMENT_ENDPOINTS,
 } as const;

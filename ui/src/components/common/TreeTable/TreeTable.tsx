@@ -217,9 +217,9 @@ export const TreeTable = <TData,>({
   };
 
   const searchAndActions = (showSearch || onAdd) && (
-    <div className="mb-4 flex items-center justify-between gap-4">
+    <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       {showSearch && (
-        <div className={searchClassName || "w-full max-w-md"}>
+        <div className={searchClassName || "w-full md:flex-1"}>
           <TextField
             placeholder={searchPlaceholder}
             value={searchValue}
@@ -228,7 +228,7 @@ export const TreeTable = <TData,>({
           />
         </div>
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 md:shrink-0">
         {headerActions}
         {onAdd && (
           <Button
@@ -275,53 +275,55 @@ export const TreeTable = <TData,>({
             key={sectionIndex}
             className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
           >
-            <table className="w-full min-w-max table-auto">
-              <tbody>
-                {sectionRows.map((flatRow, rowIndex) => {
-                  const rowId = getRowId(flatRow.data);
-                  const rowLevel = flatRow.level;
-                  const isExpandable = isRowExpandable
-                    ? isRowExpandable(flatRow.data)
-                    : flatRow.hasChildren;
-                  const isSystem = isSystemRow
-                    ? isSystemRow(flatRow.data)
-                    : false;
-                  const levelClassName = mergedLevelStyles[rowLevel] || "";
-                  const isLastRow = rowIndex === sectionRows.length - 1;
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-max table-auto">
+                <tbody>
+                  {sectionRows.map((flatRow, rowIndex) => {
+                    const rowId = getRowId(flatRow.data);
+                    const rowLevel = flatRow.level;
+                    const isExpandable = isRowExpandable
+                      ? isRowExpandable(flatRow.data)
+                      : flatRow.hasChildren;
+                    const isSystem = isSystemRow
+                      ? isSystemRow(flatRow.data)
+                      : false;
+                    const levelClassName = mergedLevelStyles[rowLevel] || "";
+                    const isLastRow = rowIndex === sectionRows.length - 1;
 
-                  const rowHoverClass =
-                    rowLevel === 0
-                      ? "hover:bg-gray-50"
-                      : rowLevel === 1
-                        ? "hover:bg-purple-100/50"
-                        : "hover:bg-gray-50";
+                    const rowHoverClass =
+                      rowLevel === 0
+                        ? "hover:bg-gray-50"
+                        : rowLevel === 1
+                          ? "hover:bg-purple-100/50"
+                          : "hover:bg-gray-50";
 
-                  return (
-                    <tr
-                      key={rowId}
-                      onClick={
-                        isExpandable ? () => onToggleExpand(rowId) : undefined
-                      }
-                      className={`group text-foreground transition-colors ${levelClassName} ${rowHoverClass} ${
-                        isExpandable ? "cursor-pointer" : ""
-                      } ${!isLastRow ? "border-b border-gray-100" : ""}`}
-                    >
-                      {columns.map((column, colIndex) =>
-                        renderCell(
-                          column,
-                          flatRow.data,
-                          rowLevel,
-                          colIndex,
-                          isExpandable,
-                          flatRow.isExpanded,
-                          isSystem,
-                        ),
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    return (
+                      <tr
+                        key={rowId}
+                        onClick={
+                          isExpandable ? () => onToggleExpand(rowId) : undefined
+                        }
+                        className={`group text-foreground transition-colors ${levelClassName} ${rowHoverClass} ${
+                          isExpandable ? "cursor-pointer" : ""
+                        } ${!isLastRow ? "border-b border-gray-100" : ""}`}
+                      >
+                        {columns.map((column, colIndex) =>
+                          renderCell(
+                            column,
+                            flatRow.data,
+                            rowLevel,
+                            colIndex,
+                            isExpandable,
+                            flatRow.isExpanded,
+                            isSystem,
+                          ),
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>{" "}
+            </div>{" "}
           </div>
         ))}
       </div>

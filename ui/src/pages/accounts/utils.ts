@@ -8,11 +8,14 @@ export function flattenAccountTreeForDropdown(
 
   for (const node of nodes) {
     const hasChildren = node.children && node.children.length > 0;
+    const isFirstLevel = level === 0;
+    const isLastLevel = level >= 2;
+
     result.push({
       value: node.id,
       label: `${node.code}  -  ${node.name}`,
       level,
-      disabled: !hasChildren,
+      disabled: !hasChildren && !isFirstLevel && isLastLevel,
     });
 
     if (hasChildren) {
