@@ -18,7 +18,7 @@ export function formatUmur(daysOverdue: number): {
     // Future due date
     return {
       text: `Jatuh tempo ${Math.abs(daysOverdue)} hari lagi`,
-      color: "text-green-600",
+      color: "text-gray-600",
     };
   } else if (daysOverdue === 0) {
     return {
