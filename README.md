@@ -78,7 +78,7 @@ Make sure to point localhost to development domain at etc/hosts (default is sda-
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/handraromel/sprout-digital-assessment.git
 cd sprout-digital-assessment
 
 # Build and start all services
