@@ -62,7 +62,15 @@ This application helps you manage your accounting data efficiently with features
 
 ### Option 1: Run Everything with Docker (Recommended)
 
-Make sure to point localhost to development domain at etc/hosts:
+Check the outer .env.example file, then:
+
+```bash
+cp .env.example .env
+```
+
+ENV file can be used as is, but can configure as desired.
+
+Make sure to point localhost to development domain at etc/hosts (default is sda-dev.local):
 
 ```bash
 127.0.0.1 sda-dev.local
